@@ -1,3 +1,9 @@
+# Tailwind CLI Tool
+tailwindcss-linux-x64
+
+# Environment File
+.env
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
