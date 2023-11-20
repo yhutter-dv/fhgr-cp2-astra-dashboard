@@ -4,6 +4,7 @@ import Header from './components/Header.vue'
 import Map from './components/Map.vue'
 import Sidebar from './components/Sidebar.vue'
 import AreaChart from './components/AreaChart.vue'
+import ScarfPlot from './components/ScarfPlot.vue'
 
 const sidebarVisible = ref(true)
 const sidebar = ref<InstanceType<typeof Sidebar> | null>(null)
@@ -32,33 +33,30 @@ const toggleSidebarVisibility = (visibility: boolean) => {
                 </div>
 
                 <div class="p-4 shadow rounded bg-white">
-                    <h3 class="font-semibold text-medium mb-2">Chart 1</h3>
+                    <h3 class="font-semibold text-medium mb-2">Area Chart</h3>
                     <AreaChart></AreaChart>
                 </div>
 
+                <div class="p-4 shadow rounded bg-white col-span-3 h-96">
+                    <h3 class="font-semibold text-medium mb-2">Scarf Plot</h3>
+                    <ScarfPlot></ScarfPlot>
+                </div>
                 <div class="p-4 shadow rounded bg-white col-span-3 h-48">
-                    <h3 class="font-medium text-md mb-2">Scarf Plot</h3>
+                    <h3 class="font-semibold text-md mb-2">Some Other Chart</h3>
                     <p class="text-sm">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nemo incidunt voluptas
                         repellendus libero
                         blanditiis ipsa quam asperiores doloremque quas sunt, reiciendis ipsum veritatis tempora, alias
                         temporibus aut dicta, neque sed.</p>
                 </div>
                 <div class="p-4 shadow rounded bg-white col-span-3 h-48">
-                    <h3 class="font-medium text-md mb-2">Scarf Plot</h3>
+                    <h3 class="font-semibold text-md mb-2">Some Other Chart</h3>
                     <p class="text-sm">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nemo incidunt voluptas
                         repellendus libero
                         blanditiis ipsa quam asperiores doloremque quas sunt, reiciendis ipsum veritatis tempora, alias
                         temporibus aut dicta, neque sed.</p>
                 </div>
                 <div class="p-4 shadow rounded bg-white col-span-3 h-48">
-                    <h3 class="font-medium text-md mb-2">Scarf Plot</h3>
-                    <p class="text-sm">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nemo incidunt voluptas
-                        repellendus libero
-                        blanditiis ipsa quam asperiores doloremque quas sunt, reiciendis ipsum veritatis tempora, alias
-                        temporibus aut dicta, neque sed.</p>
-                </div>
-                <div class="p-4 shadow rounded bg-white col-span-3 h-48">
-                    <h3 class="font-medium text-md mb-2">Scarf Plot</h3>
+                    <h3 class="font-semibold text-md mb-2">Some Other Chart</h3>
                     <p class="text-sm">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nemo incidunt voluptas
                         repellendus libero
                         blanditiis ipsa quam asperiores doloremque quas sunt, reiciendis ipsum veritatis tempora, alias

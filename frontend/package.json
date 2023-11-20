@@ -9,10 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "apexcharts": "^3.44.0",
     "maplibre-gl": "^3.6.1",
     "mitt": "^3.0.1",
     "vue": "^3.3.8",
-    "vue-maplibre-gl": "^3.0.3"
+    "vue-maplibre-gl": "^3.0.3",
+    "vue3-apexcharts": "^1.4.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.0",
