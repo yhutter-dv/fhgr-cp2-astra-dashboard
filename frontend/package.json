@@ -9,7 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.3.8"
+    "maplibre-gl": "^3.6.1",
+    "mitt": "^3.0.1",
+    "vue": "^3.3.8",
+    "vue-maplibre-gl": "^3.0.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.0",

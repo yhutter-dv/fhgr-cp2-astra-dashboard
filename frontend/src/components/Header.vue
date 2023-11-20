@@ -13,7 +13,7 @@ const toggleFilter = () => {
 </script>
 
 <template>
-    <div class="h-16 flex items-center space-x-4 sticky top-0 p-4 border-b bg-white">
+    <div class="h-16 flex items-center space-x-4 sticky top-0 p-4 border-b bg-transparent z-40 backdrop-blur">
         <svg @click="toggleFilter" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
             stroke="currentColor" :class="{ 'fill-sky-400': filterActive }"
             class="w-6 h-6 hover:cursor-pointer stroke-sky-400">

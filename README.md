@@ -58,7 +58,8 @@ npm run dev
 |[Speed up XML Parsing in Python](https://nickjanetakis.com/blog/how-i-used-the-lxml-library-to-parse-xml-20x-faster-in-python)| A good ressource for speeding up XML Parsing in Python|
 |[Tailwind](https://tailwindcss.com/)| An awesome CSS Library |
 |[VueJS](https://vuejs.org/)| A simple and fast progressive JavaScript Framework for building Single Page Applications|
-|[Leaflet](https://leafletjs.com/)| A fast and simple Map|
+|[MapLibreGL](https://maplibre.org/maplibre-gl-js/docs/)| A fast Map Library which uses WebGL for rendering|
+|[MapLibreGL VueJs](https://github.com/razorness/vue-maplibre-gl)| Vue Wrapper around MapLibreGL|
 |[Swisstopo Light Base Map](https://www.swisstopo.admin.ch/de/geodata/maps/smw/smw_lightbase.html)| A free to use Map from Swisstopo|
 |[Apex Charts](https://apexcharts.com/)| An Chart Library with a modern look and feel|
 |[FastAPI](https://github.com/tiangolo/fastapi)| A really fast REST API Library (pun intended) written in Python|
