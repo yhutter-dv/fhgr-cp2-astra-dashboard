@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tdpplv1="http://datex2.eu/wsdl/TDP/Soap_Datex2/Pull/v1" xmlns:dx223="http://datex2.eu/schema/2/2_0">
+    <SOAP-ENV:Body>
+        <dx223:d2LogicalModel xsi:type="dx223:D2LogicalModel" modelBaseVersion="2">
+            <dx223:exchange xsi:type="dx223:Exchange">
+                <dx223:supplierIdentification xsi:type="dx223:InternationalIdentifier">
+                    <dx223:country xsi:type="dx223:CountryEnum">ch</dx223:country>
+                    <dx223:nationalIdentifier xsi:type="dx223:String">OTD</dx223:nationalIdentifier>
+                </dx223:supplierIdentification>
+            </dx223:exchange>
+            <dx223:payloadPublication xsi:type="dx223:MeasurementSiteTablePublication" lang="en">
+                <dx223:publicationTime xsi:type="dx223:DateTime">2023-10-19T09:47:06.289490Z</dx223:publicationTime>
+                <dx223:publicationCreator xsi:type="dx223:InternationalIdentifier">
+                    <dx223:country xsi:type="dx223:CountryEnum">ch</dx223:country>
+                    <dx223:nationalIdentifier xsi:type="dx223:String">OTD</dx223:nationalIdentifier>
+                </dx223:publicationCreator>
+                <dx223:headerInformation xsi:type="dx223:HeaderInformation">
+                    <dx223:confidentiality xsi:type="dx223:ConfidentialityValueEnum">noRestriction</dx223:confidentiality>
+                    <dx223:informationStatus xsi:type="dx223:InformationStatusEnum">real</dx223:informationStatus>
+                </dx223:headerInformation>
+                <dx223:measurementSiteTable xsi:type="dx223:MeasurementSiteTable" id="OTD:TrafficData" version="69">
+                    <dx223:measurementSiteRecord xsi:type="dx223:MeasurementSiteRecord" id="CH:0002.01" version="1">
+                        <dx223:measurementSiteNumberOfLanes xsi:type="dx223:NonNegativeInteger">1</dx223:measurementSiteNumberOfLanes>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="11">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">car</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="12">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">car</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="21">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">lorry</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="22">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">lorry</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="1">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">anyVehicle</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="2">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">anyVehicle</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSiteLocation xsi:type="dx223:Point">
+                            <dx223:supplementaryPositionalDescription xsi:type="dx223:SupplementaryPositionalDescription">
+                                <dx223:affectedCarriagewayAndLanes xsi:type="dx223:AffectedCarriagewayAndLanes">
+                                    <dx223:carriageway xsi:type="dx223:CarriagewayEnum">mainCarriageway</dx223:carriageway>
+                                    <dx223:lane xsi:type="dx223:LaneEnum">lane1</dx223:lane>
+                                </dx223:affectedCarriagewayAndLanes>
+                            </dx223:supplementaryPositionalDescription>
+                            <dx223:alertCPoint xsi:type="dx223:AlertCMethod4Point">
+                                <dx223:alertCLocationCountryCode xsi:type="dx223:String">CH</dx223:alertCLocationCountryCode>
+                                <dx223:alertCLocationTableNumber xsi:type="dx223:String">9</dx223:alertCLocationTableNumber>
+                                <dx223:alertCLocationTableVersion xsi:type="dx223:String">7.2</dx223:alertCLocationTableVersion>
+                                <dx223:alertCDirection xsi:type="dx223:AlertCDirection">
+                                    <dx223:alertCDirectionCoded xsi:type="dx223:AlertCDirectionEnum">positive</dx223:alertCDirectionCoded>
+                                </dx223:alertCDirection>
+                                <dx223:alertCMethod4PrimaryPointLocation xsi:type="dx223:AlertCMethod4PrimaryPointLocation">
+                                    <dx223:alertCLocation xsi:type="dx223:AlertCLocation">
+                                        <dx223:specificLocation xsi:type="dx223:AlertCLocationCode">20537</dx223:specificLocation>
+                                    </dx223:alertCLocation>
+                                    <dx223:offsetDistance xsi:type="dx223:OffsetDistance">
+                                        <dx223:offsetDistance xsi:type="dx223:MetresAsNonNegativeInteger">1673</dx223:offsetDistance>
+                                    </dx223:offsetDistance>
+                                </dx223:alertCMethod4PrimaryPointLocation>
+                            </dx223:alertCPoint>
+                            <dx223:pointByCoordinates xsi:type="dx223:PointByCoordinates">
+                                <dx223:pointCoordinates xsi:type="dx223:PointCoordinates">
+                                    <dx223:latitude xsi:type="dx223:Float">46.5750885</dx223:latitude>
+                                    <dx223:longitude xsi:type="dx223:Float">6.72462416</dx223:longitude>
+                                </dx223:pointCoordinates>
+                            </dx223:pointByCoordinates>
+                        </dx223:measurementSiteLocation>
+                    </dx223:measurementSiteRecord>
+                    <dx223:measurementSiteRecord xsi:type="dx223:MeasurementSiteRecord" id="CH:0002.02" version="1">
+                        <dx223:measurementSiteNumberOfLanes xsi:type="dx223:NonNegativeInteger">1</dx223:measurementSiteNumberOfLanes>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="11">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">car</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="12">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">car</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="21">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">lorry</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="22">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">lorry</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="1">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">anyVehicle</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="2">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">anyVehicle</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSiteLocation xsi:type="dx223:Point">
+                            <dx223:supplementaryPositionalDescription xsi:type="dx223:SupplementaryPositionalDescription">
+                                <dx223:affectedCarriagewayAndLanes xsi:type="dx223:AffectedCarriagewayAndLanes">
+                                    <dx223:carriageway xsi:type="dx223:CarriagewayEnum">mainCarriageway</dx223:carriageway>
+                                    <dx223:lane xsi:type="dx223:LaneEnum">lane1</dx223:lane>
+                                </dx223:affectedCarriagewayAndLanes>
+                            </dx223:supplementaryPositionalDescription>
+                            <dx223:alertCPoint xsi:type="dx223:AlertCMethod4Point">
+                                <dx223:alertCLocationCountryCode xsi:type="dx223:String">CH</dx223:alertCLocationCountryCode>
+                                <dx223:alertCLocationTableNumber xsi:type="dx223:String">9</dx223:alertCLocationTableNumber>
+                                <dx223:alertCLocationTableVersion xsi:type="dx223:String">7.2</dx223:alertCLocationTableVersion>
+                                <dx223:alertCDirection xsi:type="dx223:AlertCDirection">
+                                    <dx223:alertCDirectionCoded xsi:type="dx223:AlertCDirectionEnum">negative</dx223:alertCDirectionCoded>
+                                </dx223:alertCDirection>
+                                <dx223:alertCMethod4PrimaryPointLocation xsi:type="dx223:AlertCMethod4PrimaryPointLocation">
+                                    <dx223:alertCLocation xsi:type="dx223:AlertCLocation">
+                                        <dx223:specificLocation xsi:type="dx223:AlertCLocationCode">25355</dx223:specificLocation>
+                                    </dx223:alertCLocation>
+                                    <dx223:offsetDistance xsi:type="dx223:OffsetDistance">
+                                        <dx223:offsetDistance xsi:type="dx223:MetresAsNonNegativeInteger">2654</dx223:offsetDistance>
+                                    </dx223:offsetDistance>
+                                </dx223:alertCMethod4PrimaryPointLocation>
+                            </dx223:alertCPoint>
+                            <dx223:pointByCoordinates xsi:type="dx223:PointByCoordinates">
+                                <dx223:pointCoordinates xsi:type="dx223:PointCoordinates">
+                                    <dx223:latitude xsi:type="dx223:Float">46.5751495</dx223:latitude>
+                                    <dx223:longitude xsi:type="dx223:Float">6.7246213</dx223:longitude>
+                                </dx223:pointCoordinates>
+                            </dx223:pointByCoordinates>
+                        </dx223:measurementSiteLocation>
+                    </dx223:measurementSiteRecord>
+                    <dx223:measurementSiteRecord xsi:type="dx223:MeasurementSiteRecord" id="CH:0003.01" version="1">
+                        <dx223:measurementSiteNumberOfLanes xsi:type="dx223:NonNegativeInteger">1</dx223:measurementSiteNumberOfLanes>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="11">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">car</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="12">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">car</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="21">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">lorry</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="22">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">lorry</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="1">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficFlow</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">anyVehicle</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSpecificCharacteristics xsi:type="dx223:_MeasurementSiteRecordIndexMeasurementSpecificCharacteristics" index="2">
+                            <dx223:measurementSpecificCharacteristics xsi:type="dx223:MeasurementSpecificCharacteristics">
+                                <dx223:period xsi:type="dx223:Seconds">60</dx223:period>
+                                <dx223:specificMeasurementValueType xsi:type="dx223:MeasuredOrDerivedDataTypeEnum">trafficSpeed</dx223:specificMeasurementValueType>
+                                <dx223:specificVehicleCharacteristics xsi:type="dx223:VehicleCharacteristics">
+                                    <dx223:vehicleType xsi:type="dx223:VehicleTypeEnum">anyVehicle</dx223:vehicleType>
+                                </dx223:specificVehicleCharacteristics>
+                            </dx223:measurementSpecificCharacteristics>
+                        </dx223:measurementSpecificCharacteristics>
+                        <dx223:measurementSiteLocation xsi:type="dx223:Point">
+                            <dx223:supplementaryPositionalDescription xsi:type="dx223:SupplementaryPositionalDescription">
+                                <dx223:affectedCarriagewayAndLanes xsi:type="dx223:AffectedCarriagewayAndLanes">
+                                    <dx223:carriageway xsi:type="dx223:CarriagewayEnum">mainCarriageway</dx223:carriageway>
+                                    <dx223:lane xsi:type="dx223:LaneEnum">lane1</dx223:lane>
+                                </dx223:affectedCarriagewayAndLanes>
+                            </dx223:supplementaryPositionalDescription>
+                            <dx223:alertCPoint xsi:type="dx223:AlertCMethod4Point">
+                                <dx223:alertCLocationCountryCode xsi:type="dx223:String">CH</dx223:alertCLocationCountryCode>
+                                <dx223:alertCLocationTableNumber xsi:type="dx223:String">9</dx223:alertCLocationTableNumber>
+                                <dx223:alertCLocationTableVersion xsi:type="dx223:String">7.2</dx223:alertCLocationTableVersion>
+                                <dx223:alertCDirection xsi:type="dx223:AlertCDirection">
+                                    <dx223:alertCDirectionCoded xsi:type="dx223:AlertCDirectionEnum">negative</dx223:alertCDirectionCoded>
+                                </dx223:alertCDirection>
+                                <dx223:alertCMethod4PrimaryPointLocation xsi:type="dx223:AlertCMethod4PrimaryPointLocation">
+                                    <dx223:alertCLocation xsi:type="dx223:AlertCLocation">
+                                        <dx223:specificLocation xsi:type="dx223:AlertCLocationCode">14878</dx223:specificLocation>
+                                    </dx223:alertCLocation>
+                                    <dx223:offsetDistance xsi:type="dx223:OffsetDistance">
+                                        <dx223:offsetDistance xsi:type="dx223:MetresAsNonNegativeInteger">365</dx223:offsetDistance>
+                                    </dx223:offsetDistance>
+                                </dx223:alertCMethod4PrimaryPointLocation>
+                            </dx223:alertCPoint>
+                            <dx223:pointByCoordinates xsi:type="dx223:PointByCoordinates">
+                                <dx223:pointCoordinates xsi:type="dx223:PointCoordinates">
+                                    <dx223:latitude xsi:type="dx223:Float">46.1050797</dx223:latitude>
+                                    <dx223:longitude xsi:type="dx223:Float">8.69817543</dx223:longitude>
+                                </dx223:pointCoordinates>
+                            </dx223:pointByCoordinates>
+                        </dx223:measurementSiteLocation>
+                        </dx223:measurementSiteRecord>
+                   </dx223:measurementSiteTable>
+            </dx223:payloadPublication>
+        </dx223:d2LogicalModel>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
