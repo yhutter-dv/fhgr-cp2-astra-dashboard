@@ -1,24 +1,22 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
-import csv
+import json
 
 
-def read_mst_locations():
-    with open("./data/mst_locations.csv", "r", newline='') as f:
-        reader = csv.DictReader(f, delimiter=";")
-        mst_locations = [{
-            "description": row["description"],
-            "east_lv95": int(row["east_lv95"]),
-            "north_lv95": int(row["north_lv95"]),
-        } for row in reader]
-    return mst_locations
+def read_mst_from_file():
+    with open("./data/mst.json", "r") as f:
+        mst = json.load(f)
+    return mst
 
 
 load_dotenv()
 app = FastAPI()
-mst_locations = read_mst_locations()
+mst = read_mst_from_file()
 
 
-@app.get("/mst_locations")
-def mst_locations():
-    return mst_locations
+@app.get("/mst")
+async def mst_locations(canton: str = ""):
+    if canton == "":
+        return mst
+    filtered_mst = [station for station in mst if station["canton"] == canton]
+    return filtered_mst
