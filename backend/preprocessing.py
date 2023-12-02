@@ -165,8 +165,6 @@ def parse_msr(xml_content):
         './/dx223:siteMeasurements',
         namespaces=ns)
 
-    print(len(site_measurement_nodes))
-
     result = dict()
     detector_measurements = []
     for node in site_measurement_nodes:
@@ -249,7 +247,7 @@ def parse_mst_from_request():
     headers = {
         'Content-Type': 'text/xml; charset=utf-8',
         "Authorization": token,
-        "SOAPAction": f"{url}/v1/pullMeasurementSiteTable"
+        "SOAPAction": "http://opentransportdata.swiss/TDP/Soap_Datex2/Pull/v1/pullMeasurementSiteTable"
     }
     response = requests.request("POST", url, headers=headers, data=payload)
     return parse_mst(response.text.encode())
@@ -269,11 +267,9 @@ def parse_msr_from_request():
     headers = {
         'Content-Type': 'text/xml; charset=utf-8',
         "Authorization": token,
-        "SOAPAction": f"{url}/v1/pullMeasuredData"
+        "SOAPAction": "http://opentransportdata.swiss/TDP/Soap_Datex2/Pull/v1/pullMeasuredData"
     }
-    print(payload)
     response = requests.request("POST", url, headers=headers, data=payload)
-    # print(response.text)
     return parse_msr(response.text.encode())
 
 
@@ -299,39 +295,30 @@ def parse_msr_from_file(file_path):
     return parse_msr(xml_content)
 
 
-def create_detector_to_measurement_type_map(mst_file_path):
-    if not os.path.isfile(mst_file_path):
-        print(f"Could not read file {mst_file_path}")
-        return
-
-    with open(mst_file_path, "r") as f:
-        stations = json.load(f)
-
-
 def demo_parse_mst_from_file():
     file_path = "./data/mst_sample.xml"
     output_path = "./data/mst.json"
-    stations = parse_mst_from_file(file_path)
+    result = parse_mst_from_file(file_path)
 
     with open(output_path, "w") as f:
-        json.dump(stations, f, indent=4)
+        json.dump(result, f, indent=4)
 
 
 def demo_parse_mst_from_request():
     output_path = "./data/mst.json"
-    stations = parse_mst_from_request()
+    result = parse_mst_from_request()
 
     with open(output_path, "w") as f:
-        json.dump(stations, f, indent=4)
+        json.dump(result, f, indent=4)
 
 
 def demo_parse_msr_from_file():
     file_path = "./data/msr_sample.xml"
     output_path = "./data/msr.json"
-    stations = parse_msr_from_file(file_path)
+    result = parse_msr_from_file(file_path)
 
     with open(output_path, "w") as f:
-        json.dump(stations, f, indent=4)
+        json.dump(result, f, indent=4)
 
 
 def demo_parse_msr_from_request():
@@ -346,7 +333,7 @@ if __name__ == "__main__":
     # Required in order to access environment variables
     load_dotenv()
     # demo_parse_mst_from_file()
-    # demo_parse_mst_from_request()
+    demo_parse_mst_from_request()
 
     # demo_parse_msr_from_file()
     demo_parse_msr_from_request()
