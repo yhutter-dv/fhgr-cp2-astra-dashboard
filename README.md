@@ -58,3 +58,4 @@ npm run dev
 |[Swisstopo Light Base Map](https://www.swisstopo.admin.ch/de/geodata/maps/smw/smw_lightbase.html)| A free to use Map from Swisstopo|
 |[FastAPI](https://github.com/tiangolo/fastapi)| A really fast REST API Library (pun intended) written in Python|
 |[Gnome Human Interface Guidelines](https://developer.gnome.org/hig/)| Design inspiration for look and feel of the dashboard|
+|[FastAPI CORS](https://fastapi.tiangolo.com/tutorial/cors/)| Allow CORS in FastAPI|

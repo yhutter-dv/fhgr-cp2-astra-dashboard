@@ -49,8 +49,8 @@ def parse_mst(xml_content):
                                "name": "",
                                "canton": "",
                                "numberId": number_id,
-                               "eastLv95": "",
-                               "northLv95": "",
+                               "eastLv95": None,
+                               "northLv95": None,
                                "detectors": []
                                }
 
@@ -85,7 +85,7 @@ def parse_mst(xml_content):
             else:
                 print(
                     f"Could not find a period for characteristic with index {index} for detector {detector['id']}")
-                characteristic["period"] = ""
+                characteristic["period"] = None
             measurement_nodes = characteristic_node.xpath(
                 ".//dx223:specificMeasurementValueType", namespaces=ns)
             if len(measurement_nodes) > 0:
@@ -93,7 +93,7 @@ def parse_mst(xml_content):
             else:
                 print(
                     f"Could not find a measurement for characteristic with index {index} detector {detector['id']}")
-                characteristic["measurement"] = ""
+                characteristic["measurement"] = None
             vehicle_type_nodes = characteristic_node.xpath(
                 ".//dx223:vehicleType", namespaces=ns)
             if len(vehicle_type_nodes) > 0:
@@ -101,7 +101,7 @@ def parse_mst(xml_content):
             else:
                 print(
                     f"Could not find a vehicle type characteristic with index {index} for detector {detector['id']}")
-                characteristic["vehicleType"] = ""
+                characteristic["vehicleType"] = None
 
             characteristic["index"] = int(index)
             characteristics.append(characteristic)
@@ -113,7 +113,7 @@ def parse_mst(xml_content):
         else:
             print(
                 f"Could not find a direction for detector {detector['id']}")
-            detector["direction"] = ""
+            detector["direction"] = None
 
         specific_location_id_nodes = node.xpath(
             ".//dx223:specificLocation", namespaces=ns)
@@ -140,8 +140,8 @@ def parse_mst(xml_content):
             mst_location_information[id] = {
                 "name": row["description"],
                 "canton": row["canton"],
-                "eastLv95": row["east_lv95"],
-                "northLv95": row["north_lv95"]
+                "eastLv95": int(row["east_lv95"]),
+                "northLv95": int(row["north_lv95"])
             }
 
     for station in stations:
@@ -190,8 +190,8 @@ def parse_msr(xml_content):
                 './/dx223:basicData//dx223:dataError', namespaces=ns)
 
             measured_value = 0
-            error_reason = ""
-            kind = ""
+            error_reason = None
+            kind = None
             has_data_error = len(has_data_error_nodes) > 0
             if has_data_error:
                 error_reason_node = measured_value_node.xpath(
