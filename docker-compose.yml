@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  influxdb:
+    image: influxdb:latest
+    volumes:
+      # Mount for influxdb data directory
+      - ./influxdb:/var/lib/influxdb2:rw
+    ports:
+      - 8086:8086
+    env_file:
+      - backend/.env
+      - backend/.env-local
+
+  fastapi:
+    build: .
+    image: fhgr-cp2-fastapi
+    depends_on:
+      - influxdb
+    ports:
+      - 8000:8000
