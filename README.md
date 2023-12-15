@@ -40,7 +40,7 @@ npm run dev
 ### Influx DB
 You can run Influx DB locally via Docker. For this simply execute the following command:
 ```bash
-sudo docker-compose run influxdb
+sudo docker-compose up -d influxdb
 ```
 InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
 
@@ -69,7 +69,7 @@ sudo docker-compose up -d --build
 After entering this command docker starts building the containers and pulling down the necessary images. Please wait until this is completed.
 
 ### FastAPI
-FastAPI should be available under this [URL](http://127.0.0.1/docs).
+FastAPI should be available under this [URL](http://127.0.0.1:8000/docs).
 
 ### InfluxDB
 InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
