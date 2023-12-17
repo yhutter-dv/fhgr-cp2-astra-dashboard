@@ -51,7 +51,7 @@ npm run dev
 ```
 
 ### Influx DB
-You can run Influx DB locally via Docker. For this simply execute the following command:
+You can run Influx DB locally via Docker. For this simply execute the following command or use the script `run_influxdb_local.sh`:
 ```bash
 sudo docker compose --env-file backend/.env-local up -d influxdb
 ```
@@ -74,10 +74,10 @@ Next a Browser Tab should open. Then you can select the Jupyter Notebook of your
 
 ## :rocket: Setup for Deployment
 In order to streamline the Deployment process we use [Docker](https://docs.docker.com/engine/install/). Please make sure that it is installed on your system and also that the `Docker Service is running`.
-Also make sure that the `docker-compose` command is available.
 
 ```bash
-sudo docker-compose up -d --build
+sudo systemctl start docker # Starts the docker service.
+./run_docker_prod.sh
 ```
 After entering this command docker starts building the containers and pulling down the necessary images. Please wait until this is completed.
 
