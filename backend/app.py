@@ -34,12 +34,14 @@ def create_app():
     return app
 
 def create_db_client():
-    token = os.environ.get("INFLUXDB_TOKEN")
-    org = "fhgr-cp2-org"
-    url = "http://127.0.0.1:8086"
+    try:
+        token = config["INFLUXDB_TOKEN"]
+        org = config["DOCKER_INFLUXDB_INIT_ORG"]
+        url = config["INFLUXDB_URL"]
 
-    write_client = influxdb_client.InfluxDBClient(url=url, token=token, org=org)
-
+        write_client = InfluxDBClient(url=url, token=token, org=org)
+    except Exception as error:
+        sys.exit(f"Error in creating influxdb client {error}")
     return write_client
 
 def load_env_vars(debug):

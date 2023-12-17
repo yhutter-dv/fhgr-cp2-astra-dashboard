@@ -11,6 +11,19 @@ First of all clone this repository to a local destination of your choice
 git clone https://github.com/yhutter-dv/fhgr-cp2-astra-dashboard.git ~/GitRepos/fhgr-cp2-astra-dashboard
 ```
 
+## Scripts
+In order to streamline some things we have created scripts. In order to use them make sure they are executable, e.g
+```bash
+chmod +x run_influx_local.sh
+...
+```
+
+|Script|Purpose|
+|---|------|
+|run_influx_local.sh|Starts and runs the InfluxDB Docker Container locally using `.env-local` as the environment file|
+|run_docker_local.sh|Starts all necessary Docker Containers locally using the `.env-local` as the environment file|
+|run_docker_prod.sh|Meant for production. Please make sure that you have filled out all fields in the `.env` file.|
+
 ## :pencil2: Setup for Local Development
 
 ### FastAPI
@@ -40,7 +53,7 @@ npm run dev
 ### Influx DB
 You can run Influx DB locally via Docker. For this simply execute the following command:
 ```bash
-sudo docker-compose up -d influxdb
+sudo docker compose --env-file backend/.env-local up -d influxdb
 ```
 InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
 
