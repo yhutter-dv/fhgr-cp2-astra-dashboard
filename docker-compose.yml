@@ -3,9 +3,11 @@ version: '3'
 services:
   influxdb:
     image: influxdb:latest
+    env_file:
+      - ./backend/.env-local
     volumes:
       # Mount for influxdb data directory
-      - ./influxdb:/var/lib/influxdb2:rw
+      - ./influxdb:/var/lib/influxdb2
     ports:
       - 8086:8086
   fastapi:
