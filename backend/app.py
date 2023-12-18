@@ -3,6 +3,7 @@ from dotenv import dotenv_values
 # FastAPI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 # Influx DB
 from influxdb_client import InfluxDBClient, Point 
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -16,6 +17,11 @@ import time
 from random import random
 from datetime import datetime
 
+class DetectorMeasurementsBody(BaseModel):
+    ids: list[str]
+    indices: list[int]
+    time: str = "-4h"
+    
 def read_mst_from_file():
     with open("./data/mst.json", "r") as f:
         mst = json.load(f)
@@ -70,13 +76,13 @@ def write_detector_measurements_from_msr(msr):
                     data = {
                         "measurement": "detector_measurement",
                         "tags": {
-                            "id": detector_measurement["id"],
-                            "index": sensor_measurement["index"],
-                            "hasError": sensor_measurement["hasError"]
+                            "id": int(detector_measurement["id"]),
+                            "index": int(sensor_measurement["index"]),
+                            "hasError": bool(sensor_measurement["hasError"])
                         },
                         "fields": {
                             "value": float(sensor_measurement["value"] + random() * 10),
-                            "numberOfInputValuesUsed": sensor_measurement.get("numberOfInputValuesUsed", 0),
+                            "numberOfInputValuesUsed": int(sensor_measurement.get("numberOfInputValuesUsed", 0)),
                             "errorReason": "none" if sensor_measurement["errorReason"] == None else sensor_measurement["errorReason"]
                         },
                         "time": datetime.utcnow()
@@ -93,13 +99,23 @@ def update_detector_measurements_in_db():
     msr = read_msr_from_file()
     write_detector_measurements_from_msr(msr)
 
+def create_query_from_template(template, placeholder, elements, operator):
+        query = ""
+        for index, element in enumerate(elements):
+            if index < len(elements) - 1:
+                # Only append or if not last element.
+                query += template.replace(placeholder, str(element)) + operator + " " 
+            else:
+                query += template.replace(placeholder, str(element))
+        return query
+
 # Global variables
 
 env_file_path = "./.env-local"
 write_options = SYNCHRONOUS
 
 bucket = "fhgr-cp2-bucket"
-update_detector_measurements_in_db_interval = '*/20' # CRON Job notation, e.g every 20 seconds
+update_detector_measurements_in_db_interval_seconds = '*/20' # CRON Job notation, e.g every 20 seconds
 
 app = create_app()
 config = load_env_vars()
@@ -110,8 +126,13 @@ cantons = list(set([station["canton"] for station in mst]))
 @app.on_event("startup")
 def on_startup():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(update_detector_measurements_in_db, 'cron', second=update_detector_measurements_in_db_interval)
-    scheduler.start()
+    scheduler.add_job(update_detector_measurements_in_db, 'cron', second=update_detector_measurements_in_db_interval_seconds)
+    # scheduler.start()
+
+@app.on_event("shutdown")
+def on_shutdown():
+    # Close db client
+    db_client.close()
 
 @app.get("/mst")
 async def get_mst(canton: str = ""):
@@ -119,6 +140,46 @@ async def get_mst(canton: str = ""):
         return mst
     filtered_mst = [station for station in mst if station["canton"] == canton]
     return filtered_mst
+
+@app.post("/detector_measurements")
+async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasurementsBody):
+    try:
+        api = db_client.query_api()
+        ids = detectorMeasurementsBody.ids
+        indices = detectorMeasurementsBody.indices
+        time_str = detectorMeasurementsBody.time
+        # Because the contains filter in influxdb is not the fastest thing in the world
+        # we use a conditional OR for filtering indices and ids
+        id_filter_template = 'r["id"] == "%id%" '
+        id_filter_query = create_query_from_template(id_filter_template, "%id%", ids, "or")
+        indices_filter_template = 'r["index"] == "%index%" '
+        indices_filter_query = create_query_from_template(indices_filter_template, "%index%", indices, "or")
+        query = """
+            from(bucket: "fhgr-cp2-bucket")
+              |> range(start: %time%)
+              |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+              |> filter(fn: (r) => %id_filter_query%)
+              |> filter(fn: (r) => %indices_filter_query%)
+              |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+        """
+        query = query.replace("%time%", time_str).replace("%id_filter_query%", id_filter_query).replace("%indices_filter_query%", indices_filter_query)
+        print(query)
+        records = api.query_stream(query)
+        measurements = []
+        for record in records:
+            measurement = {
+                "value": record["value"],
+                "id": record["id"],
+                "index": record["index"],
+                "time": record["_time"],
+                "numberOfInputValuesUsed": record["numberOfInputValuesUsed"],
+                "errorReason": record["errorReason"],
+            }
+            measurements.append(measurement)
+        return measurements
+    except Exception as error:
+        print(f"Failed to get detector measurements because {error}")
+        return []
 
 @app.get("/cantons")
 async def get_cantons():
