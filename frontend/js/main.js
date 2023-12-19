@@ -1,6 +1,10 @@
 // Global variables
 const apiBaseUrl = "http://localhost:8000";
+const defaultMarkerColor = "#4a86cf";
+const selectedMarkerColor = "#1a5fb4";
+
 let selectedStation = null;
+let markerSelected = false;
 
 // Global Leaflet layers
 let stationsLayer = L.layerGroup();
@@ -34,21 +38,33 @@ function createStationMarker(station) {
     const name = station.name;
     const icon = L.ExtraMarkers.icon({
         icon: 'bi-geo-fill',
-        markerColor: 'blue',
+        markerColor: defaultMarkerColor,
         shape: 'circle',
-        prefix: 'bi'
+        prefix: 'bi',
+        svg: true
     });
-    const popup = L.popup();
-    popup.setContent(name);
-    popup.customData = station;
-    const marker = L.marker(L.CRS.EPSG2056.unproject(L.point(eastCoordinate, northCoordinate)), { icon }).bindPopup(popup);
+    const marker = L.marker(L.CRS.EPSG2056.unproject(L.point(eastCoordinate, northCoordinate)), { icon }).bindPopup(name);
+    marker.customData = station;
+    marker.on("click", onMarkerClick);
     return marker;
 }
 
 
-function onPopupOpen(event) {
+function onMarkerClick(event) {
+    markerSelected = !markerSelected;
+    const markerColor = markerSelected === true ? selectedMarkerColor : defaultMarkerColor;
+    const icon = L.ExtraMarkers.icon({
+        icon: 'bi-geo-fill',
+        markerColor: markerColor,
+        shape: 'circle',
+        prefix: 'bi',
+        svg: true
+    });
+    const marker = event.target;
+    marker.setIcon(icon);
     // Read back station which is associated with the customData property.
-    selectedStation = event.popup.customData;
+    console.log(marker.customData);
+    selectedStation = marker.customData;
 }
 
 
@@ -98,9 +114,6 @@ async function onLoad() {
 
     // Add Event Listener for Change
     cantonsDropDown.addEventListener("change", (event) => cantonsDropDownChanged(event.target.value, map, layerControl));
-
-    map.on("popupopen", onPopupOpen);
-
 
     // Trigger inital change manually so 
     cantonsDropDownChanged("", map, layerControl);
