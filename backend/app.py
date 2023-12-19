@@ -21,6 +21,9 @@ class DetectorMeasurementsBody(BaseModel):
     ids: list[str]
     indices: list[int]
     time: str = "-4h"
+
+class StationsBody(BaseModel):
+    canton: str = ""
     
 def read_mst_from_file():
     with open("./data/mst.json", "r") as f:
@@ -76,7 +79,7 @@ def write_detector_measurements_from_msr(msr):
                     data = {
                         "measurement": "detector_measurement",
                         "tags": {
-                            "id": int(detector_measurement["id"]),
+                            "id": detector_measurement["id"],
                             "index": int(sensor_measurement["index"]),
                             "hasError": bool(sensor_measurement["hasError"])
                         },
@@ -115,13 +118,13 @@ env_file_path = "./.env-local"
 write_options = SYNCHRONOUS
 
 bucket = "fhgr-cp2-bucket"
-update_detector_measurements_in_db_interval_seconds = '*/20' # CRON Job notation, e.g every 20 seconds
+update_detector_measurements_in_db_interval_seconds = '*/5' # CRON Job notation, e.g every 20 seconds
 
 app = create_app()
 config = load_env_vars()
 db_client = connect_to_db()
-mst = read_mst_from_file()
-cantons = list(set([station["canton"] for station in mst]))
+stations = read_mst_from_file()
+cantons = list(set([station["canton"] for station in stations]))
 
 @app.on_event("startup")
 def on_startup():
@@ -134,12 +137,12 @@ def on_shutdown():
     # Close db client
     db_client.close()
 
-@app.get("/mst")
-async def get_mst(canton: str = ""):
-    if canton == "":
-        return mst
-    filtered_mst = [station for station in mst if station["canton"] == canton]
-    return filtered_mst
+@app.post("/stations")
+async def post_stations(stationsBody: StationsBody):
+    if stationsBody.canton == "":
+        return stations
+    filtered_stations = [station for station in stations if station["canton"] == stationsBody.canton]
+    return filtered_stations
 
 @app.post("/detector_measurements")
 async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasurementsBody):
@@ -163,7 +166,6 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
               |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
         """
         query = query.replace("%time%", time_str).replace("%id_filter_query%", id_filter_query).replace("%indices_filter_query%", indices_filter_query)
-        print(query)
         records = api.query_stream(query)
         measurements = []
         for record in records:

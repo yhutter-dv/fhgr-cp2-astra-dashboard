@@ -35,13 +35,21 @@ function createStationMarker(station) {
 }
 
 
-async function fetchStations(canton = "") {
-    const response = await fetch(`${apiBaseUrl}/mst?canton=${canton}`);
+async function getStations(canton = "") {
+    const response = await fetch(`${apiBaseUrl}/stations`, {
+        method: "POST",
+        body: JSON.stringify({
+            canton
+        }),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
     const stations = await response.json();
     return stations;
 }
 
-async function fetchCantons() {
+async function getCantons() {
     const response = await fetch(`${apiBaseUrl}/cantons`);
     const cantons = await response.json();
     return cantons;
@@ -51,7 +59,7 @@ async function cantonsDropDownChanged(selectedCanton, map, layerControl) {
     // Remove all markers
     stationsLayer.clearLayers();
     // Fetch all stations and create a marker on the map for the selected canton.
-    const stations = await fetchStations(selectedCanton);
+    const stations = await getStations(selectedCanton);
     stations.forEach(station => {
         const marker = createStationMarker(station);
         stationsLayer.addLayer(marker);
@@ -62,7 +70,7 @@ async function onLoad() {
     const { map, layerControl } = setupMap();
 
     // Populate cantons dropdown
-    const cantons = await fetchCantons();
+    const cantons = await getCantons();
     const cantonsDropDown = document.getElementById("canton-select");
     cantons.forEach(canton => {
         const cantonOption = document.createElement("option");
