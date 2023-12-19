@@ -105,6 +105,7 @@ InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
 |[FastAPI CORS](https://fastapi.tiangolo.com/tutorial/cors/)| Allow CORS in FastAPI|
 |[Leaflet](https://leafletjs.com/)| Simple and fast Map Library |
 |[Leaflet Extra Markers](https://www.npmjs.com/package/leaflet-extra-markers)| More customizable Icon Markers for Leaflet |
+|[Toastify](https://apvarun.github.io/toastify-js/#)| A simple and useful Toast Library |
 |[Bootstrap Icons](https://icons.getbootstrap.com/)| Bootstrap Icons |
 |[FastAPI in Docker](https://fastapi.tiangolo.com/deployment/docker/)| How to setup FastAPI inside a Docker Container |
 |[InfluxDB in Docker](https://hub.docker.com/_/influxdb)| How to setup InfluxDB inside a Docker Container |

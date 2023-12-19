@@ -25,6 +25,7 @@
     --dashboard-card-bg: #fafafa;
     --shadow-color: #c6c6c6;
     --apply-filter-bg: #4a86cf;
+    --toast-bg: #4a86cf;
 }
 
 body {
@@ -42,6 +43,12 @@ body {
     padding: 0;
     background-color: var(--body-bg);
     color: var(--text-fg);
+}
+
+.toast-message {
+    background-color: var(--toast-bg);
+    background-image: none;
+    border-radius: 0.6rem;
 }
 
 .dashboard-card {

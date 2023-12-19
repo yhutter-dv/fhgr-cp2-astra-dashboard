@@ -1,10 +1,34 @@
+import Toastify from 'toastify-js';
+
 // Global variables
 const apiBaseUrl = "http://localhost:8000";
 const defaultMarkerColor = "#4a86cf";
 const selectedMarkerColor = "#1a5fb4";
 
+const selectedMarkerIcon = L.ExtraMarkers.icon({
+    icon: 'bi-geo-fill',
+    markerColor: selectedMarkerColor,
+    shape: 'circle',
+    prefix: 'bi',
+    svg: true
+});
+
+
+const defaultMarkerIcon = L.ExtraMarkers.icon({
+    icon: 'bi-geo-fill',
+    markerColor: defaultMarkerColor,
+    shape: 'circle',
+    prefix: 'bi',
+    svg: true
+});
+
+let lastSelectedMarker = null;
+let selectedMarker = null;
 let selectedStation = null;
 let markerSelected = false;
+let selectedDirection = null;
+let selectedTimeRange = null;
+let selectedVehicleType = null;
 
 // Global Leaflet layers
 let stationsLayer = L.layerGroup();
@@ -45,26 +69,47 @@ function createStationMarker(station) {
     });
     const marker = L.marker(L.CRS.EPSG2056.unproject(L.point(eastCoordinate, northCoordinate)), { icon }).bindPopup(name);
     marker.customData = station;
-    marker.on("click", onMarkerClick);
+    marker.on("click", onMarkerClicked);
     return marker;
 }
 
 
-function onMarkerClick(event) {
-    markerSelected = !markerSelected;
-    const markerColor = markerSelected === true ? selectedMarkerColor : defaultMarkerColor;
-    const icon = L.ExtraMarkers.icon({
-        icon: 'bi-geo-fill',
-        markerColor: markerColor,
-        shape: 'circle',
-        prefix: 'bi',
-        svg: true
-    });
-    const marker = event.target;
-    marker.setIcon(icon);
+function onMarkerClicked(event) {
+    lastSelectedMarker = selectedMarker;
+    selectedMarker = event.target;
+    if (selectedMarker.customData.id === lastSelectedMarker?.customData?.id) {
+        // User has clicked on the same marker
+        markerSelected = !markerSelected;
+    } else {
+        // Different marker has been selected then previous one
+        markerSelected = true;
+        // Deselect previous marker
+        lastSelectedMarker?.setIcon(defaultMarkerIcon);
+    }
+    const icon = markerSelected === true ? selectedMarkerIcon : defaultMarkerIcon;
+    selectedMarker.setIcon(icon)
     // Read back station which is associated with the customData property.
-    console.log(marker.customData);
-    selectedStation = marker.customData;
+    selectedStation = markerSelected ? selectedMarker.customData : null;
+}
+
+function validateFilterValues() {
+    return selectedStation !== null && selectedVehicleType !== null && selectedDirection !== null && selectedTimeRange !== null;
+}
+
+function showToast(message) {
+    Toastify({
+        text: message,
+        className: "toast-message",
+        gravity: "bottom",
+        position: "center"
+    }).showToast();
+}
+
+function onApplyFilterClicked(event) {
+    if (!validateFilterValues()) {
+        showToast("Please make sure that you have a Station, Direction, Vehicle Type and Time Range selected...")
+        return;
+    }
 }
 
 
@@ -88,15 +133,28 @@ async function getCantons() {
     return cantons;
 }
 
-async function cantonsDropDownChanged(selectedCanton, map, layerControl) {
+async function onCantonsDropDownChanged(selectedCanton, map, layerControl) {
     // Remove all markers
     stationsLayer.clearLayers();
+    selectedStation = null;
     // Fetch all stations and create a marker on the map for the selected canton.
     const stations = await getStations(selectedCanton);
     stations.forEach(station => {
         const marker = createStationMarker(station);
         stationsLayer.addLayer(marker);
     });
+}
+
+function onDirectionDropDownChanged(direction) {
+    selectedDirection = direction;
+}
+
+function onTimeRangeDropDownChanged(timeRange) {
+    selectedTimeRange = timeRange;
+}
+
+function onVehicleTypeDropDownChanged(vehicleType) {
+    selectedVehicleType = vehicleType;
 }
 
 async function onLoad() {
@@ -112,11 +170,25 @@ async function onLoad() {
         cantonsDropDown.appendChild(cantonOption);
     });
 
-    // Add Event Listener for Change
-    cantonsDropDown.addEventListener("change", (event) => cantonsDropDownChanged(event.target.value, map, layerControl));
+    const directionDropDown = document.getElementById("direction-select");
+    const timeRangeDropDown = document.getElementById("time-select");
+    const vehicleTypeDropDown = document.getElementById("vehicle-select");
 
-    // Trigger inital change manually so 
-    cantonsDropDownChanged("", map, layerControl);
+    const applyFilterButton = document.getElementById("apply-filter-button");
+
+    // Add Event Listeners
+    cantonsDropDown.addEventListener("change", (event) => onCantonsDropDownChanged(event.target.value, map, layerControl));
+    directionDropDown.addEventListener("change", (event) => onDirectionDropDownChanged(event.target.value));
+    timeRangeDropDown.addEventListener("change", (event) => onTimeRangeDropDownChanged(event.target.value));
+    vehicleTypeDropDown.addEventListener("change", (event) => onVehicleTypeDropDownChanged(event.target.value));
+    
+    applyFilterButton.addEventListener("click", onApplyFilterClicked);
+
+    // Trigger inital change manually so the map gets updated properly 
+    onCantonsDropDownChanged(cantonsDropDown.options[cantonsDropDown.selectedIndex].value, map, layerControl);
+    onDirectionDropDownChanged(directionDropDown.options[directionDropDown.selectedIndex].value);
+    onTimeRangeDropDownChanged(timeRangeDropDown.options[timeRangeDropDown.selectedIndex].value);
+    onVehicleTypeDropDownChanged(vehicleTypeDropDown.options[vehicleTypeDropDown.selectedIndex].value);
 }
 
 window.addEventListener("load", onLoad)

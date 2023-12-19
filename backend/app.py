@@ -23,7 +23,7 @@ class DetectorMeasurementsBody(BaseModel):
     time: str = "-4h"
 
 class StationsBody(BaseModel):
-    canton: str = ""
+    canton: str | None = ""
     
 def read_mst_from_file():
     with open("./data/mst.json", "r") as f:
@@ -139,7 +139,7 @@ def on_shutdown():
 
 @app.post("/stations")
 async def post_stations(stationsBody: StationsBody):
-    if stationsBody.canton == "":
+    if stationsBody.canton == "" or stationsBody.canton == None:
         return stations
     filtered_stations = [station for station in stations if station["canton"] == stationsBody.canton]
     return filtered_stations
