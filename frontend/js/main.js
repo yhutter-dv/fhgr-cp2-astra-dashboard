@@ -1,5 +1,6 @@
 // Global variables
 const apiBaseUrl = "http://localhost:8000";
+let selectedStation = null;
 
 // Global Leaflet layers
 let stationsLayer = L.layerGroup();
@@ -31,7 +32,23 @@ function createStationMarker(station) {
     const eastCoordinate = station.eastLv95;
     const northCoordinate = station.northLv95;
     const name = station.name;
-    return L.marker(L.CRS.EPSG2056.unproject(L.point(eastCoordinate, northCoordinate))).bindPopup(name);
+    const icon = L.ExtraMarkers.icon({
+        icon: 'bi-geo-fill',
+        markerColor: 'blue',
+        shape: 'circle',
+        prefix: 'bi'
+    });
+    const popup = L.popup();
+    popup.setContent(name);
+    popup.customData = station;
+    const marker = L.marker(L.CRS.EPSG2056.unproject(L.point(eastCoordinate, northCoordinate)), { icon }).bindPopup(popup);
+    return marker;
+}
+
+
+function onPopupOpen(event) {
+    // Read back station which is associated with the customData property.
+    selectedStation = event.popup.customData;
 }
 
 
@@ -81,6 +98,9 @@ async function onLoad() {
 
     // Add Event Listener for Change
     cantonsDropDown.addEventListener("change", (event) => cantonsDropDownChanged(event.target.value, map, layerControl));
+
+    map.on("popupopen", onPopupOpen);
+
 
     // Trigger inital change manually so 
     cantonsDropDownChanged("", map, layerControl);
