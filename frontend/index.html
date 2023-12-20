@@ -69,10 +69,14 @@
 
         <div class="dashboard-card">
             <div class="header">
-               <h3>Traffic Flow</h3>
+                <h3>Traffic Flow</h3>
+                <div>
+                    <input type="checkbox" id="checkbox-live-mode-line-chart-traffic-flow" name="live-mode-line-chart-traffic-flow" checked/>
+                    <label for="live-mode-line-chart-traffic-flow">Enable Live Update</label>
+                </div>
             </div>
             <div class="content">
-                <div id="map"></div>
+                <canvas id="line-chart-for-traffic-flow"></canvas>
             </div>
         </div>
 
