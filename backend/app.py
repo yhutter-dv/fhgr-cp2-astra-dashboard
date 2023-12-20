@@ -17,9 +17,12 @@ import time
 from random import random
 from datetime import datetime
 
+class DetectorMeasurement(BaseModel):
+    id: str
+    index: int
+
 class DetectorMeasurementsBody(BaseModel):
-    ids: list[str]
-    indices: list[int]
+    detectorMeasurements: list[DetectorMeasurement]
     time: str = "-4h"
 
 class StationsBody(BaseModel):
@@ -148,37 +151,40 @@ async def post_stations(stationsBody: StationsBody):
 async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasurementsBody):
     try:
         api = db_client.query_api()
-        ids = detectorMeasurementsBody.ids
-        indices = detectorMeasurementsBody.indices
+        detector_measurements = detectorMeasurementsBody.detectorMeasurements
         time_str = detectorMeasurementsBody.time
-        # Because the contains filter in influxdb is not the fastest thing in the world
-        # we use a conditional OR for filtering indices and ids
-        id_filter_template = 'r["id"] == "%id%" '
-        id_filter_query = create_query_from_template(id_filter_template, "%id%", ids, "or")
-        indices_filter_template = 'r["index"] == "%index%" '
-        indices_filter_query = create_query_from_template(indices_filter_template, "%index%", indices, "or")
-        query = """
-            from(bucket: "fhgr-cp2-bucket")
-              |> range(start: %time%)
-              |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
-              |> filter(fn: (r) => %id_filter_query%)
-              |> filter(fn: (r) => %indices_filter_query%)
-              |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-        """
-        query = query.replace("%time%", time_str).replace("%id_filter_query%", id_filter_query).replace("%indices_filter_query%", indices_filter_query)
-        records = api.query_stream(query)
-        measurements = []
-        for record in records:
-            measurement = {
-                "value": record["value"],
-                "id": record["id"],
-                "index": record["index"],
-                "time": record["_time"],
-                "numberOfInputValuesUsed": record["numberOfInputValuesUsed"],
-                "errorReason": record["errorReason"],
+
+        detector_measurements_result = []
+        for detector_measurement in detector_measurements:
+            id = detector_measurement.id
+            index = detector_measurement.index
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                  |> range(start: %time%)
+                  |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                  |> filter(fn: (r) => r["index"] == "%index%")
+                  |> filter(fn: (r) => r["id"] == "%id%")
+                  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+            """
+            query = query.replace("%time%", time_str).replace("%index%", str(index)).replace("%id%", id)
+            print(f"Sending the following query {query}")
+            records = api.query_stream(query)
+            measurements = []
+            for record in records:
+                measurement = {
+                    "value": record["value"],
+                    "time": record["_time"],
+                    "numberOfInputValuesUsed": record["numberOfInputValuesUsed"],
+                    "errorReason": None if record["errorReason"] == "none" else record["errorReason"],
+                    "hasError": False if record["hasError"] == "False" else True
+                }
+                measurements.append(measurement)
+            detector_measurement = {
+                "id": id,
+                "measurements": measurements
             }
-            measurements.append(measurement)
-        return measurements
+            detector_measurements_result.append(detector_measurement)
+        return detector_measurements_result
     except Exception as error:
         print(f"Failed to get detector measurements because {error}")
         return []

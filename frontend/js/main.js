@@ -78,14 +78,14 @@ function onMarkerClicked(event) {
     lastSelectedMarker = selectedMarker;
     selectedMarker = event.target;
     if (selectedMarker.customData.id === lastSelectedMarker?.customData?.id) {
-        // User has clicked on the same marker
+        // User has clicked on the same marker therefore toggle the selection state
         markerSelected = !markerSelected;
     } else {
-        // Different marker has been selected then previous one
+        // Different marker has been selected then previous one therefore set it as selected and deselect the previous marker
         markerSelected = true;
-        // Deselect previous marker
         lastSelectedMarker?.setIcon(defaultMarkerIcon);
     }
+    // Set the selection state of the current marker
     const icon = markerSelected === true ? selectedMarkerIcon : defaultMarkerIcon;
     selectedMarker.setIcon(icon)
     // Read back station which is associated with the customData property.
@@ -93,7 +93,9 @@ function onMarkerClicked(event) {
 }
 
 function validateFilterValues() {
-    return selectedStation !== null && selectedVehicleType !== null && selectedDirection !== null && selectedTimeRange !== null;
+    const noFilterValueNull = selectedStation !== null && selectedVehicleType !== null && selectedDirection !== null && selectedTimeRange !== null;
+    const noFilterValueEmpty = selectedStation !== "" && selectedVehicleType !== "" && selectedDirection !== "" && selectedTimeRange !== "";
+    return noFilterValueNull && noFilterValueEmpty;
 }
 
 function showToast(message) {
@@ -105,11 +107,52 @@ function showToast(message) {
     }).showToast();
 }
 
-function onApplyFilterClicked(event) {
+function getDetectorsWithIndexAccordingToFilterValues(measurementType) {
+    // First get the detectors with the matching direction
+    const detectorsWithValidDirection = selectedStation.detectors.filter(d => d.direction === selectedDirection);
+
+    // Next filter by vehicle type and measurement and get out corresponding indices
+    const detectorsWithIndex = detectorsWithValidDirection.map(d => {
+        const validCharacteristics = d.characteristics.filter(c => c.measurement === measurementType && c.vehicleType === selectedVehicleType);
+        const validIndices = validCharacteristics.map(c => c.index);
+        if (validIndices.length > 1) {
+            console.warn("Got more then one index...");
+        }
+        return {
+            id: d.id,
+            index: validIndices[0],
+        };
+    });
+    return detectorsWithIndex;
+}
+
+async function onApplyFilterClicked(event) {
     if (!validateFilterValues()) {
         showToast("Please make sure that you have a Station, Direction, Vehicle Type and Time Range selected...")
         return;
     }
+    const detectorsWithIndex = getDetectorsWithIndexAccordingToFilterValues("trafficFlow");
+    console.log(selectedStation);
+    console.log("Found the following matches ", detectorsWithIndex);
+    const detectorMeasurements = await getDetectorMeasurements(detectorsWithIndex);
+    console.log("Got the following measurements: ", detectorMeasurements);
+}
+
+async function getDetectorMeasurements(detectorsWithIndex) {
+    const body = JSON.stringify({
+        "detectorMeasurements": detectorsWithIndex,
+        "time": selectedTimeRange
+    });
+    console.log("Sending the following body: ", body);
+    const response = await fetch(`${apiBaseUrl}/detector_measurements`, {
+        method: "POST",
+        body: body,
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    const detectorMeasurements = await response.json();
+    return detectorMeasurements;
 }
 
 
