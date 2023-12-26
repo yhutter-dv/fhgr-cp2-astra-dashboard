@@ -84,12 +84,13 @@ def write_detector_measurements_from_msr(msr):
                         "tags": {
                             "id": detector_measurement["id"],
                             "index": int(sensor_measurement["index"]),
-                            "hasError": bool(sensor_measurement["hasError"])
+                            "hasError": bool(sensor_measurement["hasError"]),
+                            "canton": detector_measurement.get("canton", "none")
                         },
                         "fields": {
                             "value": float(sensor_measurement["value"] + random() * 10),
                             "numberOfInputValuesUsed": int(sensor_measurement.get("numberOfInputValuesUsed", 0)),
-                            "errorReason": "none" if sensor_measurement["errorReason"] == None else sensor_measurement["errorReason"]
+                            "errorReason": sensor_measurement.get("errorReason", "none")
                         },
                         "time": datetime.utcnow()
                     }
@@ -133,7 +134,7 @@ cantons = list(set([station["canton"] for station in stations]))
 def on_startup():
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_detector_measurements_in_db, 'cron', second=update_detector_measurements_in_db_interval_seconds)
-    # scheduler.start()
+    scheduler.start()
 
 @app.on_event("shutdown")
 def on_shutdown():

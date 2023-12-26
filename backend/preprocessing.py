@@ -5,13 +5,6 @@ import requests
 from dotenv import dotenv_values
 import csv
 
-MST_LOCATIONS_FILE_PATH = "./data/mst_locations.csv"
-PAYLOAD_MST_FILE_PATH = "./data/payload_pull_mst.xml"
-PAYLOAD_MSR_FILE_PATH = "./data/payload_pull_msr.xml"
-DETECTOR_NAMES_FILE_PATH = "./data/detector_names.csv"
-ENV_FILE_PATH = "./.env-local"
-SECRETS = dotenv_values(ENV_FILE_PATH)
-
 def ensure_file(file_path):
     if not os.path.isfile(file_path):
         system.exit(f"Expected file '{file_path}' but was not found...")
@@ -27,6 +20,33 @@ def load_detector_names():
             lcd, rnid, n1id, n2id, name  = row
             detector_names[lcd] = name
     return detector_names
+
+def load_detector_id_to_canton_mapping():
+    ensure_file(MST_FILE_PATH)
+    detector_id_canton_mapping = {}
+    with open(MST_FILE_PATH, "r") as f:
+        stations = json.load(f)
+    for station in stations:
+        for detector in station["detectors"]:
+            detector_id = detector["id"]
+            canton = station["canton"]
+            detector_id_canton_mapping[detector_id] = canton
+    return detector_id_canton_mapping
+
+
+MST_LOCATIONS_FILE_PATH = "./data/mst_locations.csv"
+MST_FILE_PATH = "./data/mst.json"
+MSR_FILE_PATH = "./data/msr.json"
+PAYLOAD_MST_FILE_PATH = "./data/payload_pull_mst.xml"
+PAYLOAD_MSR_FILE_PATH = "./data/payload_pull_msr.xml"
+DETECTOR_NAMES_FILE_PATH = "./data/detector_names.csv"
+ENV_FILE_PATH = "./.env-local"
+SECRETS = dotenv_values(ENV_FILE_PATH)
+
+# Load the detector names which will be mapped to the detectors of each individual stations
+DETECTOR_NAMES = load_detector_names()
+# Load the mapping so we know which detector id is mapped to which canton
+DETECTOR_ID_TO_CANTON_MAPPING = load_detector_id_to_canton_mapping()
 
 def detector_id_to_station_id(detector_id):
     # Dectector Id: CH:0002.01
@@ -65,11 +85,7 @@ def enrich_stations(stations):
 
     return stations
 
-
 def parse_mst(xml_content):
-    # Load the detector names which will be mapped to the detectors of each individual stations
-    detector_names = load_detector_names()
-
     # Load the xml content into a etree structure which
     # can be queried with XPath expressions
     tree = etree_lxml.fromstring(xml_content)
@@ -172,7 +188,7 @@ def parse_mst(xml_content):
         if len(specific_location_id_nodes) > 0:
             location_id = specific_location_id_nodes[0].text
             detector["locationId"] = location_id
-            detector["name"] = detector_names.get(location_id, None)
+            detector["name"] = DETECTOR_NAMES.get(location_id, None)
         else:
             print(
                 f"Could not find a location id for detector {detector['id']}")
@@ -255,34 +271,16 @@ def parse_msr(xml_content):
 
             current_sensor_measurements.append(current_sensor_measurement)
 
-        current_detector_measurement["id"] = id_node.attrib["id"]
+        detector_id = id_node.attrib["id"]
+        current_detector_measurement["id"] = detector_id
         current_detector_measurement["time"] = time_node.text
         current_detector_measurement["sensorMeasurements"] = current_sensor_measurements
+        current_detector_measurement["canton"] = DETECTOR_ID_TO_CANTON_MAPPING.get(detector_id, None)
+
         detector_measurements.append(current_detector_measurement)
 
     result["detector_measurements"] = detector_measurements
     return result
-
-
-def parse_mst_from_request():
-    token = SECRETS.get("OPEN_TRANSPORT_DATA_AUTH_TOKEN", "")
-    if token == "":
-        print("No token found, are you sure you created a '.env' file and specified a value for 'OPEN_TRANSPORT_DATA_AUTH_TOKEN'?")
-        return
-
-    ensure_file(PAYLOAD_MST_FILE_PATH)
-
-    with open(PAYLOAD_MST_FILE_PATH, "r",) as f:
-        payload = f.read()
-    url = "https://api.opentransportdata.swiss/TDP/Soap_Datex2/Pull"
-
-    headers = {
-        'Content-Type': 'text/xml; charset=utf-8',
-        "Authorization": token,
-        "SOAPAction": "http://opentransportdata.swiss/TDP/Soap_Datex2/Pull/v1/pullMeasurementSiteTable"
-    }
-    response = requests.request("POST", url, headers=headers, data=payload)
-    return parse_mst(response.text.encode())
 
 
 def parse_msr_from_request():
@@ -303,67 +301,64 @@ def parse_msr_from_request():
         "SOAPAction": "http://opentransportdata.swiss/TDP/Soap_Datex2/Pull/v1/pullMeasuredData"
     }
     response = requests.request("POST", url, headers=headers, data=payload)
-    return parse_msr(response.text.encode())
+    result = parse_msr(response.text.encode())
 
-
-def parse_mst_from_file(file_path):
-    ensure_file(file_path)
-
-    with open(file_path, "rb") as f:
-        xml_content = f.read()
-
-    return parse_mst(xml_content)
-
-
-def parse_msr_from_file(file_path):
-    ensure_file(file_path)
-
-    with open(file_path, "rb") as f:
-        xml_content = f.read()
-
-    return parse_msr(xml_content)
-
-
-def demo_parse_mst_from_file():
-    file_path = "./data/mst_sample.xml"
-    output_path = "./data/mst.json"
-
-    result = parse_mst_from_file(file_path)
-
-    with open(output_path, "w") as f:
+    with open(MSR_FILE_PATH, "w") as f:
         json.dump(result, f, indent=4)
 
+def parse_mst_from_request():
+    token = SECRETS.get("OPEN_TRANSPORT_DATA_AUTH_TOKEN", "")
+    if token == "":
+        print("No token found, are you sure you created a '.env' file and specified a value for 'OPEN_TRANSPORT_DATA_AUTH_TOKEN'?")
+        return
 
-def demo_parse_mst_from_request():
-    output_path = "./data/mst.json"
+    ensure_file(PAYLOAD_MST_FILE_PATH)
 
-    result = parse_mst_from_request()
+    with open(PAYLOAD_MST_FILE_PATH, "r",) as f:
+        payload = f.read()
 
-    with open(output_path, "w") as f:
+    url = "https://api.opentransportdata.swiss/TDP/Soap_Datex2/Pull"
+
+    headers = {
+        'Content-Type': 'text/xml; charset=utf-8',
+        "Authorization": token,
+        "SOAPAction": "http://opentransportdata.swiss/TDP/Soap_Datex2/Pull/v1/pullMeasurementSiteTable"
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+    result = parse_mst(response.text.encode())
+
+    with open(MST_FILE_PATH, "w") as f:
         json.dump(result, f, indent=4)
 
-
-def demo_parse_msr_from_file():
+def parse_msr_from_file():
     file_path = "./data/msr_sample.xml"
-    output_path = "./data/msr.json"
+    ensure_file(file_path)
 
-    result = parse_msr_from_file(file_path)
+    with open(file_path, "rb") as f:
+        xml_content = f.read()
 
-    with open(output_path, "w") as f:
+    result = parse_msr(xml_content)
+
+    with open(MSR_FILE_PATH, "w") as f:
         json.dump(result, f, indent=4)
 
+def parse_mst_from_file():
+    file_path = "./data/mst_sample.xml"
+    ensure_file(file_path)
 
-def demo_parse_msr_from_request():
-    output_path = "./data/msr.json"
-    result = parse_msr_from_request()
+    with open(file_path, "rb") as f:
+        xml_content = f.read()
 
-    with open(output_path, "w") as f:
+    result = parse_mst(xml_content)
+
+    with open(MST_FILE_PATH, "w") as f:
         json.dump(result, f, indent=4)
+
 
 
 if __name__ == "__main__":
-    # demo_parse_mst_from_file()
-    demo_parse_mst_from_request()
+    # parse_mst_from_file()
+    parse_mst_from_request()
 
-    # demo_parse_msr_from_file()
-    demo_parse_msr_from_request()
+    # parse_msr_from_file()
+    parse_msr_from_request()
