@@ -2,9 +2,31 @@ from lxml import etree as etree_lxml
 import os
 import json
 import requests
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 import csv
 
+MST_LOCATIONS_FILE_PATH = "./data/mst_locations.csv"
+PAYLOAD_MST_FILE_PATH = "./data/payload_pull_mst.xml"
+PAYLOAD_MSR_FILE_PATH = "./data/payload_pull_msr.xml"
+DETECTOR_NAMES_FILE_PATH = "./data/detector_names.csv"
+ENV_FILE_PATH = "./.env-local"
+SECRETS = dotenv_values(ENV_FILE_PATH)
+
+def ensure_file(file_path):
+    if not os.path.isfile(file_path):
+        system.exit(f"Expected file '{file_path}' but was not found...")
+
+def load_detector_names():
+    ensure_file(DETECTOR_NAMES_FILE_PATH)
+    # Build up dictionary where the name of the detector can be retrieved by id
+    detector_names = {}
+    with open(DETECTOR_NAMES_FILE_PATH, 'r', encoding="utf-8") as f:
+        csv_reader = csv.reader(f, delimiter=';')
+        next(csv_reader)  # skip header
+        for row in csv_reader:
+            lcd, rnid, n1id, n2id, name  = row
+            detector_names[lcd] = name
+    return detector_names
 
 def detector_id_to_station_id(detector_id):
     # Dectector Id: CH:0002.01
@@ -17,8 +39,37 @@ def station_id_to_number_id(station_id):
     # Number Id: 2
     return int(station_id.split(":")[1])
 
+def enrich_stations(stations):
+    ensure_file(MST_LOCATIONS_FILE_PATH)
+    # Build up a lookup table where information about a station can easily be retrieved by id
+    mst_location_information = {}
+    with open(MST_LOCATIONS_FILE_PATH, "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            id = int(row["id"])
+            mst_location_information[id] = {
+                "name": row["description"],
+                "canton": row["canton"],
+                "eastLv95": int(row["east_lv95"]),
+                "northLv95": int(row["north_lv95"])
+            }
+
+    # Enrich station with human readable names, location information and which canton they belong to
+    for station in stations:
+        station_id = station["numberId"]
+        mst_location_information_for_station = mst_location_information[station_id]
+        station["name"] = mst_location_information_for_station["name"]
+        station["canton"] = mst_location_information_for_station["canton"]
+        station["eastLv95"] = mst_location_information_for_station["eastLv95"]
+        station["northLv95"] = mst_location_information_for_station["northLv95"]
+
+    return stations
+
 
 def parse_mst(xml_content):
+    # Load the detector names which will be mapped to the detectors of each individual stations
+    detector_names = load_detector_names()
+
     # Load the xml content into a etree structure which
     # can be queried with XPath expressions
     tree = etree_lxml.fromstring(xml_content)
@@ -119,7 +170,9 @@ def parse_mst(xml_content):
             ".//dx223:specificLocation", namespaces=ns)
 
         if len(specific_location_id_nodes) > 0:
-            detector["locationId"] = specific_location_id_nodes[0].text
+            location_id = specific_location_id_nodes[0].text
+            detector["locationId"] = location_id
+            detector["name"] = detector_names.get(location_id, None)
         else:
             print(
                 f"Could not find a location id for detector {detector['id']}")
@@ -130,29 +183,7 @@ def parse_mst(xml_content):
 
     stations.append(current_station)
 
-    # Enrich station with human readable names, location information and which canton
-    # they belong to
-    mst_location_information = {}
-    with open("./data/mst_locations.csv", "r") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            id = int(row["id"])
-            mst_location_information[id] = {
-                "name": row["description"],
-                "canton": row["canton"],
-                "eastLv95": int(row["east_lv95"]),
-                "northLv95": int(row["north_lv95"])
-            }
-
-    for station in stations:
-        station_id = station["numberId"]
-        mst_location_information_for_station = mst_location_information[station_id]
-        station["name"] = mst_location_information_for_station["name"]
-        station["canton"] = mst_location_information_for_station["canton"]
-        station["eastLv95"] = mst_location_information_for_station["eastLv95"]
-        station["northLv95"] = mst_location_information_for_station["northLv95"]
-    return stations
-
+    return enrich_stations(stations)
 
 def parse_msr(xml_content):
     tree = etree_lxml.fromstring(xml_content)
@@ -234,13 +265,14 @@ def parse_msr(xml_content):
 
 
 def parse_mst_from_request():
-    token = os.getenv(
-        "OPEN_TRANSPORT_DATA_AUTH_TOKEN", "")
+    token = SECRETS.get("OPEN_TRANSPORT_DATA_AUTH_TOKEN", "")
     if token == "":
         print("No token found, are you sure you created a '.env' file and specified a value for 'OPEN_TRANSPORT_DATA_AUTH_TOKEN'?")
         return
 
-    with open("./data/payload_pull_mst.xml", "r",) as f:
+    ensure_file(PAYLOAD_MST_FILE_PATH)
+
+    with open(PAYLOAD_MST_FILE_PATH, "r",) as f:
         payload = f.read()
     url = "https://api.opentransportdata.swiss/TDP/Soap_Datex2/Pull"
 
@@ -254,13 +286,14 @@ def parse_mst_from_request():
 
 
 def parse_msr_from_request():
-    token = os.getenv(
-        "OPEN_TRANSPORT_DATA_AUTH_TOKEN", "")
+    token = SECRETS.get("OPEN_TRANSPORT_DATA_AUTH_TOKEN", "")
     if token == "":
         print("No token found, are you sure you created a '.env' file and specified a value for 'OPEN_TRANSPORT_DATA_AUTH_TOKEN'?")
         return
 
-    with open("./data/payload_pull_msr.xml", "r",) as f:
+    ensure_file(PAYLOAD_MSR_FILE_PATH)
+
+    with open(PAYLOAD_MSR_FILE_PATH, "r",) as f:
         payload = f.read()
     url = "https://api.opentransportdata.swiss/TDP/Soap_Datex2/Pull"
 
@@ -274,9 +307,7 @@ def parse_msr_from_request():
 
 
 def parse_mst_from_file(file_path):
-    if not os.path.isfile(file_path):
-        print(f"Could not open file '{file_path}'")
-        return
+    ensure_file(file_path)
 
     with open(file_path, "rb") as f:
         xml_content = f.read()
@@ -285,9 +316,7 @@ def parse_mst_from_file(file_path):
 
 
 def parse_msr_from_file(file_path):
-    if not os.path.isfile(file_path):
-        print(f"Could not open file '{file_path}'")
-        return
+    ensure_file(file_path)
 
     with open(file_path, "rb") as f:
         xml_content = f.read()
@@ -298,6 +327,7 @@ def parse_msr_from_file(file_path):
 def demo_parse_mst_from_file():
     file_path = "./data/mst_sample.xml"
     output_path = "./data/mst.json"
+
     result = parse_mst_from_file(file_path)
 
     with open(output_path, "w") as f:
@@ -306,6 +336,7 @@ def demo_parse_mst_from_file():
 
 def demo_parse_mst_from_request():
     output_path = "./data/mst.json"
+
     result = parse_mst_from_request()
 
     with open(output_path, "w") as f:
@@ -315,6 +346,7 @@ def demo_parse_mst_from_request():
 def demo_parse_msr_from_file():
     file_path = "./data/msr_sample.xml"
     output_path = "./data/msr.json"
+
     result = parse_msr_from_file(file_path)
 
     with open(output_path, "w") as f:
@@ -330,8 +362,6 @@ def demo_parse_msr_from_request():
 
 
 if __name__ == "__main__":
-    # Required in order to access environment variables
-    load_dotenv()
     # demo_parse_mst_from_file()
     demo_parse_mst_from_request()
 
