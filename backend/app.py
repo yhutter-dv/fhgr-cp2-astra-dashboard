@@ -133,7 +133,7 @@ db_client = connect_to_db()
 def on_startup():
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_detector_measurements_in_db, 'cron', second=UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS)
-    scheduler.start()
+    # scheduler.start()
 
 @app.on_event("shutdown")
 def on_shutdown():
