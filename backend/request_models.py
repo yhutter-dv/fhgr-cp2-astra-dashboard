@@ -10,3 +10,4 @@ class DetectorMeasurementsBody(BaseModel):
 
 class StationsBody(BaseModel):
     canton: str | None = ""
+    time: str = "-4h"

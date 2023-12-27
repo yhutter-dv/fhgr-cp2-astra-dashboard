@@ -70,7 +70,7 @@ def load_secrets():
 
 def write_detector_measurements_from_msr(msr):
     try:
-        with db_client.write_api(write_options=write_options) as api:
+        with db_client.write_api(write_options=WRITE_OPTIONS) as api:
             detector_measurements = []
             for detector_measurement in msr["detector_measurements"]:
                 for sensor_measurement in detector_measurement["sensorMeasurements"]:
@@ -92,7 +92,7 @@ def write_detector_measurements_from_msr(msr):
                     }
                     detector_measurements.append(data)
             print(f"Writing {len(detector_measurements)} detector measurements into db...")
-            api.write(bucket=bucket, org=db_client.org, record=detector_measurements)
+            api.write(bucket=BUCKET, org=db_client.org, record=detector_measurements)
             print("Finished...")
     except Exception as error:
         print(f"Failed to write MSR data because {error}")
@@ -141,10 +141,64 @@ def on_shutdown():
 
 @app.post("/stations")
 async def post_stations(stationsBody: StationsBody):
-    if stationsBody.canton == "" or stationsBody.canton == None:
-        return MST
-    filtered_stations = [station for station in MST if station["canton"] == stationsBody.canton]
-    return filtered_stations
+    stations = []
+    has_canton = stationsBody.canton != None and stationsBody.canton != ""
+    if not has_canton:
+        # Do not filter stations
+        stations = MST
+    else:
+        stations = [station for station in MST if station["canton"] == stationsBody.canton]
+
+    # Query influx to get the number of errors for each station
+    try:
+        api = db_client.query_api()
+        time_str = stationsBody.time
+
+        number_of_errors_per_station = []
+
+        query = ""
+        if has_canton:
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> filter(fn: (r) => r["canton"] == "%canton%")
+                    |> group(columns: ["stationId"])
+                    |> count()
+            """
+            query = query.replace("%canton%", stationsBody.canton)
+        else:
+            # No canton specified
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> group(columns: ["stationId"])
+                    |> count()
+            """
+        query = query.replace("%time%", time_str)
+        print(f"Sending the following query {query}")
+        records = api.query_stream(query)
+
+        # Create dictionary with station id as key for fast look up
+        station_id_to_error_number_mapping = {}
+        for record in records:
+            station_id = record["stationId"]
+            number_of_errors = record["_value"]
+            station_id_to_error_number_mapping[station_id] = number_of_errors
+
+        # Add number_of_errors property to stations
+        for station in stations:
+            station_id = station["id"]
+            # If the mapping returns 0 this means the station was not in the result set, e.g hasError was false. Therefore we can simply set the number to 0.
+            station["numberOfErrors"] = station_id_to_error_number_mapping.get(station_id, 0)
+
+        return stations
+    except Exception as error:
+        print(f"Failed to get stations because of {error}")
+        return []
 
 @app.post("/detector_measurements")
 async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasurementsBody):

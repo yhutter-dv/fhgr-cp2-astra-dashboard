@@ -69,6 +69,8 @@ function createStationMarker(station) {
     const eastCoordinate = station.eastLv95;
     const northCoordinate = station.northLv95;
     const name = station.name;
+
+    // TODO: Depending on the number of errors we change the marker color
     const icon = L.ExtraMarkers.icon({
         icon: 'bi-geo-fill',
         markerColor: defaultMarkerColor,
@@ -163,11 +165,16 @@ async function getDetectorMeasurements(detectorsWithIndex) {
 
 
 async function getStations(canton = "") {
+    const body = {
+        "canton": canton
+    };
+    // Optionally add time property if time range is defined.
+    if (selectedTimeRange !== null && selectedTimeRange !== "") {
+        body.time = selectedTimeRange;
+    }
     const response = await fetch(`${apiBaseUrl}/stations`, {
         method: "POST",
-        body: JSON.stringify({
-            canton
-        }),
+        body: JSON.stringify(body),
         headers: {
             "Content-type": "application/json; charset=UTF-8"
         }
