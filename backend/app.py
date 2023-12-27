@@ -353,3 +353,113 @@ async def get_station_number_of_errors(stationNumberOfErrorsBody: CantonNumberOf
     except Exception as error:
         print(f"Failed to get number of errors per station because {error}")
         return []
+
+@app.post("/station/trafficFlow")
+async def get_station_trafficFlow(stationTrafficFlowBody: CantonNumberOfErrorsBody):
+    try:
+        api = db_client.query_api()
+        has_canton = stationTrafficFlowBody.canton != None and stationTrafficFlowBody.canton != ""
+        canton = stationTrafficFlowBody.canton
+        time_str = stationTrafficFlowBody.time
+
+        query = ""
+        if has_canton:
+            # one canton specified, group by station and show mean
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["kind"] == "trafficFlow")
+                    |> filter(fn: (r) => r["_field"] == "value")
+                    |> filter(fn: (r) => r["canton"] == "%canton%")
+                    |> group(columns: ["stationId"])
+                    |> mean()
+            """
+            query = query.replace("%canton%", canton)
+        else:
+            # No canton specified, group by canton and show mean
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["kind"] == "trafficFlow")
+                    |> filter(fn: (r) => r["_field"] == "value")
+                    |> group(columns: ["canton"])
+                    |> mean()
+            """
+        query = query.replace("%time%", time_str)
+        print(f"Sending the following query {query}")
+        stations_trafficFlows = []
+        records = api.query_stream(query)
+        for record in records:
+            if has_canton:
+                station_trafficFlow = {
+                    "stationId": record["stationId"],
+                    "trafficFlow(mean)": record["_value"],
+                }
+                stations_trafficFlows.append(station_trafficFlow)
+            else:
+                station_trafficFlow = {
+                    "canton": record["canton"],
+                    "trafficFlow(mean)": record["_value"],
+                }
+                stations_trafficFlows.append(station_trafficFlow)
+        return stations_trafficFlows
+    except Exception as error:
+        print(f"Failed to get traffic flow per station because {error}")
+        return []
+
+@app.post("/station/trafficSpeed")
+async def get_station_trafficSpeed(stationTrafficSpeedBody: CantonNumberOfErrorsBody):
+    try:
+        api = db_client.query_api()
+        has_canton = stationTrafficSpeedBody.canton != None and stationTrafficSpeedBody.canton != ""
+        canton = stationTrafficSpeedBody.canton
+        time_str = stationTrafficSpeedBody.time
+
+        query = ""
+        if has_canton:
+            # one canton specified, group by station and show mean
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["kind"] == "trafficSpeed")
+                    |> filter(fn: (r) => r["_field"] == "value")
+                    |> filter(fn: (r) => r["canton"] == "%canton%")
+                    |> group(columns: ["stationId"])
+                    |> mean()
+            """
+            query = query.replace("%canton%", canton)
+        else:
+            # No canton specified, group by canton and show mean
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["kind"] == "trafficSpeed")
+                    |> filter(fn: (r) => r["_field"] == "value")
+                    |> group(columns: ["canton"])
+                    |> mean()
+            """
+        query = query.replace("%time%", time_str)
+        print(f"Sending the following query {query}")
+        stations_trafficSpeeds = []
+        records = api.query_stream(query)
+        for record in records:
+            if has_canton:
+                station_trafficSpeed = {
+                    "stationId": record["stationId"],
+                    "trafficSpeed(mean)": record["_value"],
+                }
+                stations_trafficSpeeds.append(station_trafficSpeed)
+            else:
+                station_trafficSpeed = {
+                    "canton": record["canton"],
+                    "trafficSpeed(mean)": record["_value"],
+                }
+                stations_trafficSpeeds.append(station_trafficSpeed)
+        return stations_trafficSpeeds
+    except Exception as error:
+        print(f"Failed to get traffic speed per station because {error}")
+        return []
