@@ -16,6 +16,7 @@ import time
 from random import random
 from datetime import datetime
 from request_models import *
+from defaults import *
 
 def ensure_file(file_path):
     if not os.path.isfile(file_path):
@@ -113,6 +114,11 @@ def create_query_from_template(template, placeholder, elements, operator):
                 query += template.replace(placeholder, str(element))
         return query
 
+def get_value_or_default(value, default):
+    if value == None or value == "":
+        return default
+    return value
+
 # Global variables
 MSR_FILE_PATH = "./data/msr.json"
 MST_FILE_PATH = "./data/mst.json"
@@ -153,7 +159,7 @@ async def post_stations(stationsBody: StationsBody):
     # Query influx to get the number of errors for each station
     try:
         api = db_client.query_api()
-        time_str = stationsBody.time
+        time_str = get_value_or_default(stationsBody.time, DEFAULT_TIME_RANGE)
 
         number_of_errors_per_station = []
 
@@ -206,7 +212,7 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
     try:
         api = db_client.query_api()
         detector_measurements = detectorMeasurementsBody.detectorMeasurements
-        time_str = detectorMeasurementsBody.time
+        time_str = get_value_or_default(detectorMeasurementsBody.time, DEFAULT_TIME_RANGE)
 
         detector_measurements_result = []
         for detector_measurement in detector_measurements:
@@ -253,7 +259,7 @@ async def get_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfE
         api = db_client.query_api()
         has_canton = cantonNumberOfErrorsBody.canton != None and cantonNumberOfErrorsBody.canton != ""
         canton = cantonNumberOfErrorsBody.canton
-        time_str = cantonNumberOfErrorsBody.time
+        time_str = get_value_or_default(cantonNumberOfErrorsBody.time, DEFAULT_TIME_RANGE)
 
         query = ""
         if has_canton:

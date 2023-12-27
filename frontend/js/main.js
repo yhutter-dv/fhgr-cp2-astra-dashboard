@@ -167,12 +167,9 @@ async function getDetectorMeasurements(detectorsWithIndex) {
 
 async function getStations(canton = "") {
     const body = {
-        "canton": canton
+        "canton": canton,
+        "time": selectedTimeRange
     };
-    // Optionally add time property if time range is defined.
-    if (selectedTimeRange !== null && selectedTimeRange !== "") {
-        body.time = selectedTimeRange;
-    }
     const response = await fetch(`${apiBaseUrl}/stations`, {
         method: "POST",
         body: JSON.stringify(body),
@@ -192,7 +189,8 @@ async function getCantons() {
 
 async function getNumberOfErrorsForCantons() {
     const body = {
-        "canton": selectedCanton
+        "canton": selectedCanton,
+        "time": selectedTimeRange
     };
     const response = await fetch(`${apiBaseUrl}/cantons/numberOfErrors`, {
         method: "POST",
