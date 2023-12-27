@@ -297,4 +297,59 @@ async def get_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfE
     except Exception as error:
         print(f"Failed to get number of errors per canton because {error}")
         return []
-    
+
+
+
+
+@app.post("/station/numberOfErrors")
+async def get_station_number_of_errors(stationNumberOfErrorsBody: CantonNumberOfErrorsBody):
+    try:
+        api = db_client.query_api()
+        has_canton = stationNumberOfErrorsBody.canton != None and stationNumberOfErrorsBody.canton != ""
+        canton = stationNumberOfErrorsBody.canton
+        time_str = stationNumberOfErrorsBody.time
+
+        query = ""
+        if has_canton:
+            # one canton specified, group by station
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> filter(fn: (r) => r["canton"] == "%canton%")
+                    |> group(columns: ["stationId"])
+                    |> count()
+            """
+            query = query.replace("%canton%", canton)
+        else:
+            # No canton specified, group by canton
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> group(columns: ["canton"])
+                    |> count()
+            """
+        query = query.replace("%time%", time_str)
+        print(f"Sending the following query {query}")
+        stations_number_of_errors = []
+        records = api.query_stream(query)
+        for record in records:
+            if has_canton:
+                station_number_of_errors = {
+                    "stationId": record["stationId"],
+                    "numberOfErrors": record["_value"],
+                }
+                stations_number_of_errors.append(station_number_of_errors)
+            else:
+                station_number_of_errors = {
+                    "canton": record["canton"],
+                    "numberOfErrors": record["_value"],
+                }
+                stations_number_of_errors.append(station_number_of_errors)
+        return stations_number_of_errors
+    except Exception as error:
+        print(f"Failed to get number of errors per station because {error}")
+        return []
