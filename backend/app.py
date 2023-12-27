@@ -81,7 +81,8 @@ def write_detector_measurements_from_msr(msr):
                             "index": int(sensor_measurement["index"]),
                             "hasError": bool(sensor_measurement["hasError"]),
                             "canton": detector_measurement.get("canton", "none"),
-                            "stationId": detector_measurement.get("stationId", "none")
+                            "stationId": detector_measurement.get("stationId", "none"),
+                            "kind": "none" if sensor_measurement["kind"] == None else sensor_measurement["kind"]
                         },
                         "fields": {
                             "value": float(sensor_measurement["value"] + random() * 10),
@@ -245,4 +246,49 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
 @app.get("/cantons")
 async def get_cantons():
     return CANTONS
+
+@app.post("/cantons/numberOfErrors")
+async def get_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfErrorsBody):
+    try:
+        api = db_client.query_api()
+        has_canton = cantonNumberOfErrorsBody.canton != None and cantonNumberOfErrorsBody.canton != ""
+        canton = cantonNumberOfErrorsBody.canton
+        time_str = cantonNumberOfErrorsBody.time
+
+        query = ""
+        if has_canton:
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> filter(fn: (r) => r["canton"] == "%canton%")
+                    |> group(columns: ["canton"])
+                    |> count()
+            """
+            query = query.replace("%canton%", canton)
+        else:
+            # No canton specified
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> group(columns: ["canton"])
+                    |> count()
+            """
+        query = query.replace("%time%", time_str)
+        print(f"Sending the following query {query}")
+        cantons_number_of_errors = []
+        records = api.query_stream(query)
+        for record in records:
+            canton_number_of_errors = {
+                "canton": record["canton"],
+                "numberOfErrors": record["_value"],
+            }
+            cantons_number_of_errors.append(canton_number_of_errors)
+        return cantons_number_of_errors
+    except Exception as error:
+        print(f"Failed to get number of errors per canton because {error}")
+        return []
     

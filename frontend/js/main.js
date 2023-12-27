@@ -32,6 +32,7 @@ let markerSelected = false;
 let selectedDirection = null;
 let selectedTimeRange = null;
 let selectedVehicleType = null;
+let selectedCanton = null;
 
 // Charts
 
@@ -189,10 +190,28 @@ async function getCantons() {
     return cantons;
 }
 
-async function onCantonsDropDownChanged(selectedCanton, map, layerControl) {
+async function getNumberOfErrorsForCantons() {
+    const body = {
+        "canton": selectedCanton
+    };
+    const response = await fetch(`${apiBaseUrl}/cantons/numberOfErrors`, {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    const numberOfErrorsPerCanton = await response.json();
+    console.log(numberOfErrorsPerCanton);
+    return numberOfErrorsPerCanton;
+}
+
+async function onCantonsDropDownChanged(canton, map, layerControl) {
     // Remove all markers
     stationsLayer.clearLayers();
     selectedStation = null;
+    selectedCanton = canton;
+    const numberOfErrorsPerCanton = await getNumberOfErrorsForCantons();
     // Fetch all stations and create a marker on the map for the selected canton.
     const stations = await getStations(selectedCanton);
     stations.forEach(station => {

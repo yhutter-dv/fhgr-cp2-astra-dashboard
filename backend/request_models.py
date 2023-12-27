@@ -6,8 +6,12 @@ class DetectorMeasurement(BaseModel):
 
 class DetectorMeasurementsBody(BaseModel):
     detectorMeasurements: list[DetectorMeasurement]
-    time: str = "-4h"
+    time: str = "-4h" # Optional
 
 class StationsBody(BaseModel):
-    canton: str | None = ""
-    time: str = "-4h"
+    canton: str | None = "" # Optional
+    time: str = "-4h" # Optional
+
+class CantonNumberOfErrorsBody(BaseModel):
+    canton: str | None = ""  # Optional
+    time: str = "-4h" # Optional
