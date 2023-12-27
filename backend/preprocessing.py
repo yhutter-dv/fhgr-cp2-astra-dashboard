@@ -276,6 +276,7 @@ def parse_msr(xml_content):
         current_detector_measurement["time"] = time_node.text
         current_detector_measurement["sensorMeasurements"] = current_sensor_measurements
         current_detector_measurement["canton"] = DETECTOR_ID_TO_CANTON_MAPPING.get(detector_id, None)
+        current_detector_measurement["stationId"] = detector_id_to_station_id(detector_id)
 
         detector_measurements.append(current_detector_measurement)
 

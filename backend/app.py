@@ -85,7 +85,8 @@ def write_detector_measurements_from_msr(msr):
                             "id": detector_measurement["id"],
                             "index": int(sensor_measurement["index"]),
                             "hasError": bool(sensor_measurement["hasError"]),
-                            "canton": detector_measurement.get("canton", "none")
+                            "canton": detector_measurement.get("canton", "none"),
+                            "stationId": detector_measurement.get("stationId", "none")
                         },
                         "fields": {
                             "value": float(sensor_measurement["value"] + random() * 10),
@@ -122,7 +123,7 @@ env_file_path = "./.env-local"
 write_options = SYNCHRONOUS
 
 bucket = "fhgr-cp2-bucket"
-update_detector_measurements_in_db_interval_seconds = '*/5' # CRON Job notation, e.g every 20 seconds
+update_detector_measurements_in_db_interval_seconds = '*/5' # CRON Job notation, e.g every 5 seconds
 
 app = create_app()
 config = load_env_vars()
