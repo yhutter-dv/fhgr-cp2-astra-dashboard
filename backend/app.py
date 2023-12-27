@@ -133,7 +133,7 @@ db_client = connect_to_db()
 def on_startup():
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_detector_measurements_in_db, 'cron', second=UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS)
-    # scheduler.start()
+    scheduler.start()
 
 @app.on_event("shutdown")
 def on_shutdown():
@@ -246,7 +246,7 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
 @app.get("/cantons")
 async def get_cantons():
     return CANTONS
-
+#Test Test
 @app.post("/cantons/numberOfErrors")
 async def get_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfErrorsBody):
     try:
@@ -291,4 +291,59 @@ async def get_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfE
     except Exception as error:
         print(f"Failed to get number of errors per canton because {error}")
         return []
-    
+
+
+
+
+@app.post("/station/numberOfErrors")
+async def get_station_number_of_errors(stationNumberOfErrorsBody: CantonNumberOfErrorsBody):
+    try:
+        api = db_client.query_api()
+        has_canton = stationNumberOfErrorsBody.canton != None and stationNumberOfErrorsBody.canton != ""
+        canton = stationNumberOfErrorsBody.canton
+        time_str = stationNumberOfErrorsBody.time
+
+        query = ""
+        if has_canton:
+            # one canton specified, group by station
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> filter(fn: (r) => r["canton"] == "%canton%")
+                    |> group(columns: ["stationId"])
+                    |> count()
+            """
+            query = query.replace("%canton%", canton)
+        else:
+            # No canton specified, group by canton
+            query = """
+                from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> group(columns: ["canton"])
+                    |> count()
+            """
+        query = query.replace("%time%", time_str)
+        print(f"Sending the following query {query}")
+        stations_number_of_errors = []
+        records = api.query_stream(query)
+        for record in records:
+            if has_canton:
+                station_number_of_errors = {
+                    "stationId": record["stationId"],
+                    "numberOfErrors": record["_value"],
+                }
+                stations_number_of_errors.append(station_number_of_errors)
+            else:
+                station_number_of_errors = {
+                    "canton": record["canton"],
+                    "numberOfErrors": record["_value"],
+                }
+                stations_number_of_errors.append(station_number_of_errors)
+        return stations_number_of_errors
+    except Exception as error:
+        print(f"Failed to get number of errors per station because {error}")
+        return []
