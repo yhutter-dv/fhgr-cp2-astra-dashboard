@@ -3,7 +3,6 @@ from dotenv import dotenv_values
 # FastAPI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 # Influx DB
 from influxdb_client import InfluxDBClient, Point 
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -16,26 +15,22 @@ import sys
 import time
 from random import random
 from datetime import datetime
+from request_models import *
 
-class DetectorMeasurement(BaseModel):
-    id: str
-    index: int
+def ensure_file(file_path):
+    if not os.path.isfile(file_path):
+        system.exit(f"Expected file '{file_path}' but was not found...")
 
-class DetectorMeasurementsBody(BaseModel):
-    detectorMeasurements: list[DetectorMeasurement]
-    time: str = "-4h"
-
-class StationsBody(BaseModel):
-    canton: str | None = ""
-    
 def read_mst_from_file():
-    with open("./data/mst.json", "r") as f:
+    ensure_file(MST_FILE_PATH)
+    with open(MST_FILE_PATH, "r") as f:
         mst = json.load(f)
     return mst
 
 
 def read_msr_from_file():
-    with open("./data/msr.json", "r") as f:
+    ensure_file(MSR_FILE_PATH)
+    with open(MSR_FILE_PATH, "r") as f:
         msr = json.load(f)
     return msr
 
@@ -54,9 +49,9 @@ def create_app():
 
 def connect_to_db():
     try:
-        token = config["DOCKER_INFLUXDB_INIT_ADMIN_TOKEN"]
-        org = config["DOCKER_INFLUXDB_INIT_ORG"]
-        url = config["INFLUXDB_URL"]
+        token = SECRETS["DOCKER_INFLUXDB_INIT_ADMIN_TOKEN"]
+        org = SECRETS["DOCKER_INFLUXDB_INIT_ORG"]
+        url = SECRETS["INFLUXDB_URL"]
 
         print(f"Connecting to InfluxDB with the following configuration\n token => {token}\n org => {org}\n url => {url}")
         write_client = InfluxDBClient(url=url, token=token, org=org)
@@ -65,13 +60,13 @@ def connect_to_db():
     return write_client
 
 
-def load_env_vars():
-    if not os.path.isfile(env_file_path):
-        sys.exit(f"Expected file {env_file_path} to be available but it was not found...")
+def load_secrets():
+    if not os.path.isfile(ENV_FILE_PATH):
+        sys.exit(f"Expected file {ENV_FILE_PATH} to be available but it was not found...")
     else:
-        print(f"Found env file {env_file_path}...")
-    config = dotenv_values(env_file_path)
-    return config
+        print(f"Found env file {ENV_FILE_PATH}...")
+    secrets = dotenv_values(ENV_FILE_PATH)
+    return secrets
 
 def write_detector_measurements_from_msr(msr):
     try:
@@ -118,24 +113,26 @@ def create_query_from_template(template, placeholder, elements, operator):
         return query
 
 # Global variables
+MSR_FILE_PATH = "./data/msr.json"
+MST_FILE_PATH = "./data/mst.json"
 
-env_file_path = "./.env-local"
-write_options = SYNCHRONOUS
+ENV_FILE_PATH = "./.env-local"
+WRITE_OPTIONS = SYNCHRONOUS
 
-bucket = "fhgr-cp2-bucket"
-update_detector_measurements_in_db_interval_seconds = '*/5' # CRON Job notation, e.g every 5 seconds
+BUCKET = "fhgr-cp2-bucket"
+UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS = '*/5' # CRON Job notation, e.g every 5 seconds
+SECRETS = load_secrets()
+MST = read_mst_from_file()
+CANTONS = list(set([station["canton"] for station in MST]))
 
 app = create_app()
-config = load_env_vars()
 db_client = connect_to_db()
-stations = read_mst_from_file()
-cantons = list(set([station["canton"] for station in stations]))
 
 @app.on_event("startup")
 def on_startup():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(update_detector_measurements_in_db, 'cron', second=update_detector_measurements_in_db_interval_seconds)
-    scheduler.start()
+    scheduler.add_job(update_detector_measurements_in_db, 'cron', second=UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS)
+    # scheduler.start()
 
 @app.on_event("shutdown")
 def on_shutdown():
@@ -145,8 +142,8 @@ def on_shutdown():
 @app.post("/stations")
 async def post_stations(stationsBody: StationsBody):
     if stationsBody.canton == "" or stationsBody.canton == None:
-        return stations
-    filtered_stations = [station for station in stations if station["canton"] == stationsBody.canton]
+        return MST
+    filtered_stations = [station for station in MST if station["canton"] == stationsBody.canton]
     return filtered_stations
 
 @app.post("/detector_measurements")
@@ -193,5 +190,5 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
 
 @app.get("/cantons")
 async def get_cantons():
-    return cantons
+    return CANTONS
     
