@@ -246,7 +246,7 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
 @app.get("/cantons")
 async def get_cantons():
     return CANTONS
-#Test Test
+
 @app.post("/cantons/numberOfErrors")
 async def get_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfErrorsBody):
     try:
