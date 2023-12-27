@@ -7,6 +7,13 @@ const apiBaseUrl = "http://localhost:8000";
 const defaultMarkerColor = "#4a86cf";
 const selectedMarkerColor = "#1a5fb4";
 const updateIntervalMs = 1000;
+const cantonColors = [
+  '#9DC4E2', '#C79999', '#9ED69D', '#FFCC99', '#FFD1DC', '#CC99CC',
+  '#FF9999', '#FFFF99', '#CCCCCC', '#99FFFF', '#99B3E6', '#CCB299',
+  '#99CC99', '#D9D9D9', '#FFB366', '#FF99CC', '#CC99CC', '#CC6666',
+  '#FFDF80', '#B3E6E6', '#CCB299', '#C4E6C4', '#E6E6E6', '#FFCC99',
+  '#FFCCCC', '#CC99FF', '#FFD1DC'
+];
 
 const selectedMarkerIcon = L.ExtraMarkers.icon({
     icon: 'bi-geo-fill',
@@ -33,6 +40,7 @@ let selectedDirection = null;
 let selectedTimeRange = null;
 let selectedVehicleType = null;
 let selectedCanton = null;
+let cantonToColorMap = {};
 
 // Charts
 
@@ -66,21 +74,28 @@ function setupMap () {
     return { map, layerControl };
 }
 
-function createStationMarker(station) {
-    const eastCoordinate = station.eastLv95;
-    const northCoordinate = station.northLv95;
-    const name = station.name;
-
-    // TODO: Depending on the number of errors we change the marker color
-    const icon = L.ExtraMarkers.icon({
-        icon: 'bi-geo-fill',
-        markerColor: defaultMarkerColor,
-        shape: 'circle',
+function createMarkerIcon(station, isSelected = false) {
+    // Depending on the number of errors we show a different icon and modify the color
+    const icon = station.numberOfErrors === 0 ? "bi-check-circle-fill" : "bi-exclamation-circle-fill";
+    const color = cantonToColorMap[station.canton];
+    const markerIcon = L.ExtraMarkers.icon({
+        icon: icon,
+        markerColor: isSelected === true ? selectedMarkerColor: color,
+        shape: "circle",
         prefix: 'bi',
         svg: true
     });
-    const marker = L.marker(L.CRS.EPSG2056.unproject(L.point(eastCoordinate, northCoordinate)), { icon }).bindPopup(name);
-    marker.customData = station;
+    return markerIcon;
+}
+
+function createStationMarker(station) {
+    const eastCoordinate = station.eastLv95;
+    const northCoordinate = station.northLv95;
+    const popup = L.popup().setContent(`<p><b>${station.name}</b></p><p>Errors: ${station.numberOfErrors} out of ${station.numberOfErrorsForCanton} errors total for canton ${station.canton}</p>`);
+
+    const markerIcon = createMarkerIcon(station);
+    const marker = L.marker(L.CRS.EPSG2056.unproject(L.point(eastCoordinate, northCoordinate)), { icon: markerIcon }).bindPopup(popup);
+    marker.station = station;
     marker.on("click", onMarkerClicked);
     return marker;
 }
@@ -89,19 +104,20 @@ function createStationMarker(station) {
 function onMarkerClicked(event) {
     lastSelectedMarker = selectedMarker;
     selectedMarker = event.target;
-    if (selectedMarker.customData.id === lastSelectedMarker?.customData?.id) {
+    if (selectedMarker.station.id === lastSelectedMarker?.station?.id) {
         // User has clicked on the same marker therefore toggle the selection state
         markerSelected = !markerSelected;
     } else {
         // Different marker has been selected then previous one therefore set it as selected and deselect the previous marker
         markerSelected = true;
-        lastSelectedMarker?.setIcon(defaultMarkerIcon);
+        const markerIcon = createMarkerIcon(selectedMarker.station, false);
+        lastSelectedMarker?.setIcon(markerIcon);
     }
     // Set the selection state of the current marker
-    const icon = markerSelected === true ? selectedMarkerIcon : defaultMarkerIcon;
-    selectedMarker.setIcon(icon)
-    // Read back station which is associated with the customData property.
-    selectedStation = markerSelected ? selectedMarker.customData : null;
+    const markerIcon = createMarkerIcon(selectedMarker.station, markerSelected);
+    selectedMarker.setIcon(markerIcon)
+    // Read back station which is associated with the marker.
+    selectedStation = markerSelected ? selectedMarker.station : null;
 }
 
 function validateFilterValues() {
@@ -200,7 +216,6 @@ async function getNumberOfErrorsForCantons() {
         }
     });
     const numberOfErrorsPerCanton = await response.json();
-    console.log(numberOfErrorsPerCanton);
     return numberOfErrorsPerCanton;
 }
 
@@ -213,6 +228,14 @@ async function onCantonsDropDownChanged(canton, map, layerControl) {
     // Fetch all stations and create a marker on the map for the selected canton.
     const stations = await getStations(selectedCanton);
     stations.forEach(station => {
+        // Add number of errors per canton as property -> Look it up via the canton property of the station itself
+        const matches = numberOfErrorsPerCanton.filter(e => e.canton === station.canton);
+        if (matches.length > 0) {
+            station.numberOfErrorsForCanton = matches[0].numberOfErrors;
+        } else {
+            // Here we assume that no errors are there otherwise we would have had a match
+            station.numberOfErrorsForCanton = 0;
+        }
         const marker = createStationMarker(station);
         stationsLayer.addLayer(marker);
     });
@@ -291,14 +314,20 @@ function toggleLiveUpdateForLineChartTrafficFlow(enabled) {
 async function onLoad() {
     const { map, layerControl } = setupMap();
 
-    // Populate cantons dropdown
     const cantons = await getCantons();
     const cantonsDropDown = document.getElementById("canton-select");
-    cantons.forEach(canton => {
+    // Populate cantons dropdown and define color map
+    cantons.forEach((canton, index)=> {
         const cantonOption = document.createElement("option");
         cantonOption.textContent = canton;
         cantonOption.value = canton;
         cantonsDropDown.appendChild(cantonOption);
+
+        if (index < cantonColors.length) {
+            cantonToColorMap[canton] = cantonColors[index];
+        } else {
+            console.warn(`No color defined for canton ${canton} because index was out of range -> index: ${index}, length of array: ${cantonColors.length}`);
+        }
     });
 
     const directionDropDown = document.getElementById("direction-select");
