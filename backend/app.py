@@ -361,7 +361,7 @@ async def get_station_trafficFlow(stationTrafficFlowBody: CantonNumberOfErrorsBo
         api = db_client.query_api()
         has_canton = stationTrafficFlowBody.canton != None and stationTrafficFlowBody.canton != ""
         canton = stationTrafficFlowBody.canton
-        time_str = stationTrafficFlowBody.time
+        time_str = get_value_or_default(stationTrafficFlowBody.time, DEFAULT_TIME_RANGE)
 
         query = ""
         if has_canton:
@@ -416,7 +416,7 @@ async def get_station_trafficSpeed(stationTrafficSpeedBody: CantonNumberOfErrors
         api = db_client.query_api()
         has_canton = stationTrafficSpeedBody.canton != None and stationTrafficSpeedBody.canton != ""
         canton = stationTrafficSpeedBody.canton
-        time_str = stationTrafficSpeedBody.time
+        time_str = get_value_or_default(stationTrafficSpeedBody.time, DEFAULT_TIME_RANGE)
 
         query = ""
         if has_canton:
