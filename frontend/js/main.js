@@ -4,33 +4,16 @@ import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 
 // Global variables
 const apiBaseUrl = "http://localhost:8000";
-const defaultMarkerColor = "#4a86cf";
 const selectedMarkerColor = "#1a5fb4";
 const updateIntervalMs = 1000;
+
 const cantonColors = [
-  '#9DC4E2', '#C79999', '#9ED69D', '#FFCC99', '#FFD1DC', '#CC99CC',
-  '#FF9999', '#FFFF99', '#CCCCCC', '#99FFFF', '#99B3E6', '#CCB299',
-  '#99CC99', '#D9D9D9', '#FFB366', '#FF99CC', '#CC99CC', '#CC6666',
-  '#FFDF80', '#B3E6E6', '#CCB299', '#C4E6C4', '#E6E6E6', '#FFCC99',
-  '#FFCCCC', '#CC99FF', '#FFD1DC'
+    '#9DC4E2', '#C79999', '#9ED69D', '#FFCC99', '#FFD1DC', '#CC99CC',
+    '#FF9999', '#FFFF99', '#CCCCCC', '#99FFFF', '#99B3E6', '#CCB299',
+    '#99CC99', '#D9D9D9', '#FFB366', '#FF99CC', '#CC99CC', '#CC6666',
+    '#FFDF80', '#B3E6E6', '#CCB299', '#C4E6C4', '#E6E6E6', '#FFCC99',
+    '#FFCCCC', '#CC99FF', '#FFD1DC'
 ];
-
-const selectedMarkerIcon = L.ExtraMarkers.icon({
-    icon: 'bi-geo-fill',
-    markerColor: selectedMarkerColor,
-    shape: 'circle',
-    prefix: 'bi',
-    svg: true
-});
-
-
-const defaultMarkerIcon = L.ExtraMarkers.icon({
-    icon: 'bi-geo-fill',
-    markerColor: defaultMarkerColor,
-    shape: 'circle',
-    prefix: 'bi',
-    svg: true
-});
 
 let lastSelectedMarker = null;
 let selectedMarker = null;
@@ -51,7 +34,7 @@ let lineChartTrafficFlowLiveUpdateEnabled = false;
 // Global Leaflet layers
 let stationsLayer = L.layerGroup();
 
-function setupMap () {
+function setupMap() {
     // Create map and attach id to element with id "mapid"
     const map = L.map('map', {
         // Use LV95 (EPSG:2056) projection
@@ -80,7 +63,7 @@ function createMarkerIcon(station, isSelected = false) {
     const color = cantonToColorMap[station.canton];
     const markerIcon = L.ExtraMarkers.icon({
         icon: icon,
-        markerColor: isSelected === true ? selectedMarkerColor: color,
+        markerColor: isSelected === true ? selectedMarkerColor : color,
         shape: "circle",
         prefix: 'bi',
         svg: true
@@ -146,9 +129,11 @@ function getDetectorsWithIndexAccordingToFilterValues(measurementType) {
         if (validIndices.length > 1) {
             console.warn("Got more then one index...");
         }
+        // In case of an error the index must be zero
+        const index = selectedStation.numberOfErrors > 0 ? 0 : validIndices[0]
         return {
             id: d.id,
-            index: validIndices[0],
+            index: index,
         };
     });
     return detectorsWithIndex;
@@ -284,6 +269,11 @@ function liveUpdateLineChartForTrafficFlow() {
     lineChartForTrafficFlow.update();
 }
 
+function toolTipForLineChartTrafficFlow(tooltipItem) {
+    console.log(tooltipItem);
+    return "Hello";
+}
+
 function createLineChartForTrafficFlow() {
     const context = document.getElementById("line-chart-for-traffic-flow");
     const config = {
@@ -295,7 +285,14 @@ function createLineChartForTrafficFlow() {
                     type: "time",
                 }
             },
-            responsive: true
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        afterLabel: toolTipForLineChartTrafficFlow
+                    }
+                }
+            }
         },
     };
     const chart = new Chart(context, config);
@@ -307,7 +304,7 @@ function toggleLiveUpdateForLineChartTrafficFlow(enabled) {
     if (lineChartTrafficFlowLiveUpdateEnabled) {
         lineChartForTrafficFlowUpdateInteralId = setInterval(liveUpdateLineChartForTrafficFlow, updateIntervalMs);
     } else {
-        clearInterval(lineChartForTrafficFlowUpdateInteralId );
+        clearInterval(lineChartForTrafficFlowUpdateInteralId);
     }
 }
 
@@ -317,7 +314,7 @@ async function onLoad() {
     const cantons = await getCantons();
     const cantonsDropDown = document.getElementById("canton-select");
     // Populate cantons dropdown and define color map
-    cantons.forEach((canton, index)=> {
+    cantons.forEach((canton, index) => {
         const cantonOption = document.createElement("option");
         cantonOption.textContent = canton;
         cantonOption.value = canton;
