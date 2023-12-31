@@ -86,9 +86,9 @@ def write_detector_measurements_from_msr(msr):
                             "kind": "none" if sensor_measurement["kind"] == None else sensor_measurement["kind"]
                         },
                         "fields": {
-                            "value": float(sensor_measurement["value"] + random() * 10),
+                            "value": float(sensor_measurement["value"]),
                             "numberOfInputValuesUsed": int(sensor_measurement.get("numberOfInputValuesUsed", 0)),
-                            "errorReason": sensor_measurement.get("errorReason", "none")
+                            "errorReason": "none" if sensor_measurement["errorReason"] == None else sensor_measurement["errorReason"]
                         },
                         "time": datetime.utcnow()
                     }
@@ -246,6 +246,7 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
             detector_measurements_result.append(detector_measurement)
         return detector_measurements_result
     except Exception as error:
+        print(error)
         print(f"Failed to get detector measurements because {error}")
         return []
 
@@ -307,7 +308,7 @@ async def get_station_number_of_errors(stationNumberOfErrorsBody: CantonNumberOf
         api = db_client.query_api()
         has_canton = stationNumberOfErrorsBody.canton != None and stationNumberOfErrorsBody.canton != ""
         canton = stationNumberOfErrorsBody.canton
-        time_str = stationNumberOfErrorsBody.time
+        time_str = get_value_or_default(stationNumberOfErrorsBody.time, DEFAULT_TIME_RANGE)
 
         query = ""
         if has_canton:
