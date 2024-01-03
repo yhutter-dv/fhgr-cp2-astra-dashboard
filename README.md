@@ -1,44 +1,58 @@
 <div align="center">
-    <h1>:car: ASTRA Realtime Dashboard</h1> 
-    <h2>Realtime Data Dashboard with ASTRA Dataset for Consultancy Project 2 @ FHGR</h2>
+    <h1>:car: ASTRA Realtime Dashboard</h1>
+    <h2>Realtime Data Dashboard with ASTRA Dataset for Consultancy Project 2</h2>
     <br/>
     <br/>
 </div>
 
 ## Clone the Repo
+
 First of all clone this repository to a local destination of your choice
+
 ```bash
 git clone https://github.com/yhutter-dv/fhgr-cp2-astra-dashboard.git ~/GitRepos/fhgr-cp2-astra-dashboard
 ```
 
 ## Fill out the .env file
-In order for the Docker Container to work properly you need to fill out the `.env` file in the **backend directory**.
 
+In order for the Docker Container to work properly you need to fill out the
+`.env` file in the `backend directory`.
 
 ## Scripts
-In order to streamline some things we have created scripts. In order to use them make sure they are executable, e.g
+
+In order to streamline some things we have created scripts. In order to use them
+make sure they are executable, e.g
+
 ```bash
 chmod +x *.sh
 ```
 
-|Script|Purpose|
-|---|------|
-|run_influxdb.sh|Starts and runs the InfluxDB Docker Container|
-|run_docker.sh|Starts all necessary Docker Containers|
-|clean_influxdb_storage.sh|Clean the entire influxdb storage|
+| Script                    | Purpose                                       |
+| ------------------------- | --------------------------------------------- |
+| run_influxdb.sh           | Starts and runs the InfluxDB Docker Container |
+| run_docker.sh             | Starts all necessary Docker Containers        |
+| clean_influxdb_storage.sh | Clean the entire influxdb storage             |
 
 ## :pencil2: Setup for Local Development
-> Note that it is every important that you start each component in the correct order as described below (e.g First InfluxDB then FastAPI and then Frontend).
+
+> Note that it is important that you start each component in the correct order
+> as described below (e.g First InfluxDB then FastAPI and then Frontend).
 
 ### Influx DB
-You can run Influx DB locally via Docker. For this simply execute the following command or use the script `run_influxdb.sh`:
+
+You can run Influx DB locally via Docker. For this simply execute the following
+command or use the script `run_influxdb.sh`:
+
 ```bash
 sudo docker compose up -d influxdb
 ```
+
 InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
 
 ### FastAPI
-The backend is implemented in Python. It is generally a good idea to create a virtual environment and install the required packages local to this environment:
+
+The backend is implemented in Python. It is generally a good idea to create a
+virtual environment and install the required packages local to this environment:
 
 ```bash
 cd backend
@@ -50,11 +64,26 @@ uvicorn app:app --reload
 
 FastAPI should be available under this [URL](http://127.0.0.1:8000/docs).
 
-> Be aware that the response contains about 2MB of JSON so trying it out inside Swagger may cause your browser to hang.
+> Be aware that the response contains about 2MB of JSON so trying it out inside
+> Swagger may cause your browser to hang.
 
 ### Frontend
-The frontend is written in Vanilla Javascript with some dependencies like [ChartJS](https://www.chartjs.org/) and [Leaflet](https://leafletjs.com/). First make sure that [NodeJS](https://nodejs.org/en/) is installed. If possible choose the **Current** Version.
+
+The Frontend is written in React (TypeScript) with some dependencies like
+[React Map GL](https://visgl.github.io/react-map-gl/) and
+[Apex Charts](https://apexcharts.com/). First make sure that
+[NodeJS](https://nodejs.org/en/) is installed. If possible choose the
+**Current** Version.
+
+Also for the Map to work a
+[MapBox Token](https://docs.mapbox.com/help/getting-started/access-tokens/) is
+required. Once you have that you must add it to the `.env` in the frontend
+diretory along with the URL of the FastAPI.
+
+> :warning: Please do NOT check in the `.env` file with your Secrets.
+
 After that simply install all required packages by running
+
 ```bash
 cd frontend
 npm i
@@ -62,7 +91,10 @@ npm run dev
 ```
 
 ## Jupyter Notebook
-In order to explore the data in more depth we have created a Jupyter Notebook in order to run it do the following commands:
+
+In order to explore the data in more depth we have created a Jupyter Notebook in
+order to run it do the following commands:
+
 ```bash
 cd jupyter_notebooks
 python -m venv ./venv
@@ -72,41 +104,51 @@ python -m ipykernel install --user --name=venv
 jupyter notebook ./
 ```
 
-Next a Browser Tab should open. Then you can select the Jupyter Notebook of your choice.
+Next a Browser Tab should open. Then you can select the Jupyter Notebook of your
+choice.
 
-> Important: Please do not forget to select the installed `venv` as the kernel in order to utilize the installed virtual environment in the Jupyter Notebook.
+> Important: Please do not forget to select the installed `venv` as the kernel
+> in order to utilize the installed virtual environment in the Jupyter Notebook.
 
 ## :rocket: Setup for Deployment
-In order to streamline the Deployment process we use [Docker](https://docs.docker.com/engine/install/). Please make sure that it is installed on your system and also that the `Docker Service is running`.
+
+In order to streamline the Deployment process we use
+[Docker](https://docs.docker.com/engine/install/). Please make sure that it is
+installed on your system and also that the `Docker Service is running`.
 
 ```bash
 sudo systemctl start docker # Starts the docker service.
 ./run_docker.sh
 ```
-After entering this command docker starts building the containers and pulling down the necessary images. Please wait until this is completed.
+
+After entering this command docker starts building the containers and pulling
+down the necessary images. Please wait until this is completed.
 
 ### FastAPI
+
 FastAPI should be available under this [URL](http://127.0.0.1:8000/docs).
 
 ### InfluxDB
+
 InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
 
 ## Used Ressources
 
-|Link|Description|
-|--|----|
-|[Why a .env?](https://blog.devgenius.io/why-a-env-7b4a79ba689)| Contains useful information what .env files are and how they can be used|
-|[Open-Data-Plattform Mobilität Schweiz](https://opentransportdata.swiss/de/strassenverkehr/)| API in order to retrieve Realtime Data on Mobility related topics|
-|[Make SOAP Requests](https://www.geeksforgeeks.org/making-soap-api-calls-using-python/)| How to make SOAP Requests in Python|
-|[Speed up XML Parsing in Python](https://nickjanetakis.com/blog/how-i-used-the-lxml-library-to-parse-xml-20x-faster-in-python)| A good ressource for speeding up XML Parsing in Python|
-|[Swisstopo Light Base Map](https://www.swisstopo.admin.ch/de/geodata/maps/smw/smw_lightbase.html)| A free to use Map from Swisstopo|
-|[FastAPI](https://github.com/tiangolo/fastapi)| A really fast REST API Library (pun intended) written in Python|
-|[Gnome Human Interface Guidelines](https://developer.gnome.org/hig/)| Design inspiration for look and feel of the dashboard|
-|[FastAPI CORS](https://fastapi.tiangolo.com/tutorial/cors/)| Allow CORS in FastAPI|
-|[Leaflet](https://leafletjs.com/)| Simple and fast Map Library |
-|[Leaflet Extra Markers](https://www.npmjs.com/package/leaflet-extra-markers)| More customizable Icon Markers for Leaflet |
-|[Toastify](https://apvarun.github.io/toastify-js/#)| A simple and useful Toast Library |
-|[Bootstrap Icons](https://icons.getbootstrap.com/)| Bootstrap Icons |
-|[FastAPI in Docker](https://fastapi.tiangolo.com/deployment/docker/)| How to setup FastAPI inside a Docker Container |
-|[InfluxDB in Docker](https://hub.docker.com/_/influxdb)| How to setup InfluxDB inside a Docker Container |
-|[InfluxDB Python Client](https://github.com/influxdata/influxdb-client-python)| Sample Repo for working with InfluxDB and Python|
+| Link                                                                                                                           | Description                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| [Why a .env?](https://blog.devgenius.io/why-a-env-7b4a79ba689)                                                                 | Contains useful information what .env files are and how they can be used |
+| [Open-Data-Plattform Mobilität Schweiz](https://opentransportdata.swiss/de/strassenverkehr/)                                   | API in order to retrieve Realtime Data on Mobility related topics        |
+| [Make SOAP Requests](https://www.geeksforgeeks.org/making-soap-api-calls-using-python/)                                        | How to make SOAP Requests in Python                                      |
+| [Speed up XML Parsing in Python](https://nickjanetakis.com/blog/how-i-used-the-lxml-library-to-parse-xml-20x-faster-in-python) | A good ressource for speeding up XML Parsing in Python                   |
+| [FastAPI](https://github.com/tiangolo/fastapi)                                                                                 | A really fast REST API Library (pun intended) written in Python          |
+| [FastAPI CORS](https://fastapi.tiangolo.com/tutorial/cors/)                                                                    | Allow CORS in FastAPI                                                    |
+| [FastAPI in Docker](https://fastapi.tiangolo.com/deployment/docker/)                                                           | How to setup FastAPI inside a Docker Container                           |
+| [InfluxDB in Docker](https://hub.docker.com/_/influxdb)                                                                        | How to setup InfluxDB inside a Docker Container                          |
+| [InfluxDB Python Client](https://github.com/influxdata/influxdb-client-python)                                                 | Sample Repo for working with InfluxDB and Python                         |
+| [React](https://react.dev/)                                                                                                    | React Framework                                                          |
+| [Tailwind](https://tailwindcss.com/)                                                                                           | A CSS Framework to build UIs.                                            |
+| [Heroicons](https://heroicons.com/)                                                                                            | Nice Icons designed by the makes of Tailwind                             |
+| [React Map GL](https://visgl.github.io/react-map-gl/)                                                                          | Map Library for efficiently rendering lots of data points                |
+| [Apex Charts](https://apexcharts.com/)                                                                                         | Chart Library with lots of different chart types.                        |
+| [Vite](https://vitejs.dev/guide/)                                                                                              | Super fast Web Bundler.                                                  |
+| [Vite Environment Variables](https://vitejs.dev/guide/env-and-mode)                                                            | How to use environment variables in Vite.                                |
