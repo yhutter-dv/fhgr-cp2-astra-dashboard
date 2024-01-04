@@ -1,6 +1,6 @@
 export type FilterSettings = {
-  canton: string;
-  timeRange: string;
-  vehicleType: string;
-  direction: string;
+  canton: string | undefined;
+  timeRange: string | undefined;
+  vehicleType: string | undefined;
+  direction: string | undefined;
 };

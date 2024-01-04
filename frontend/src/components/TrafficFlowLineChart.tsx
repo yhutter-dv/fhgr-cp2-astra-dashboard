@@ -9,6 +9,11 @@ export default function TrafficFlowLineChart() {
         xaxis: {
             categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998]
         },
+        colors: ["#020617"],
+        stroke: {
+            lineCap: "round",
+            curve: "smooth",
+        },
     };
 
     const SERIES = [
@@ -19,9 +24,7 @@ export default function TrafficFlowLineChart() {
     ]
 
     return (
-
         <>
-
             <Chart
                 options={OPTIONS}
                 series={SERIES}
@@ -29,6 +32,5 @@ export default function TrafficFlowLineChart() {
                 height="100%"
             />
         </>
-
     );
 }

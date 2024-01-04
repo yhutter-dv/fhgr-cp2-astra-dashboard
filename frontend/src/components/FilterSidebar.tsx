@@ -1,11 +1,14 @@
-import { Switch } from '@headlessui/react';
 import { useEffect, useState } from 'react';
-import ListBox from './ListBox';
 import { FilterSettings } from '../models/FilterSettings';
+import { Card, Typography, Input, Select, Option, Button, Switch } from '@material-tailwind/react';
 
 type Props = {
     onApplyFilterSettings: (filterSettings: FilterSettings) => void
 }
+
+// Implemented with reference to 
+// - https://www.material-tailwind.com/docs/react/sidebar
+// - https://www.material-tailwind.com/docs/react/select
 
 export default function FilterSideBar({ onApplyFilterSettings }: Props) {
 
@@ -51,72 +54,59 @@ export default function FilterSideBar({ onApplyFilterSettings }: Props) {
     }
 
     const [cantons, setCantons] = useState<Array<string>>(["No Canton selected"]);
-    const [selectedCanton, setSelectedCanton] = useState<string>(cantons[0]);
+    const [selectedCanton, setSelectedCanton] = useState<string | undefined>(cantons[0]);
 
-    const [selectedTimeRange, setSelectedTimeRange] = useState<string>(timeRanges[0]);
-    const [selectedDirection, setSelectedDirection] = useState<string>(directions[0]);
-    const [selectedVehicleType, setSelectedVehicleType] = useState<string>(vehicleTypes[0]);
+    const [selectedTimeRange, setSelectedTimeRange] = useState<string | undefined>(timeRanges[0]);
+    const [selectedDirection, setSelectedDirection] = useState<string | undefined>(directions[0]);
+    const [selectedVehicleType, setSelectedVehicleType] = useState<string | undefined>(vehicleTypes[0]);
 
-    const [liveModeEnabled, setLiveModeEnabled] = useState<boolean>(true);
 
     useEffect(() => {
-        fetchCantons();
+        // fetchCantons();
     }, []);
 
     return (
-        <div className="fixed top-0 left-0 z-40 w-64 pt-32 px-4 h-screen bg-white border border-r-1">
-            <div className="flex flex-col justify-start">
-                <div className='flex flex-row justify-start items-center mb-4'>
-                    <Switch
-                        checked={liveModeEnabled}
-                        onChange={setLiveModeEnabled}
-                        className={`${liveModeEnabled ? 'bg-blue-600' : 'bg-gray-200'
-                            } relative inline-flex h-6 w-11 items-center rounded-full mr-2`}
-                    >
-                        <span className="sr-only">Toggle Filter Sidebar</span>
-                        <span
-                            className={`${liveModeEnabled ? 'translate-x-6' : 'translate-x-1'
-                                } inline-block h-4 w-4 transform rounded-full bg-white transition`}
-                        />
-                    </Switch>
-                    <h1 className='text-sm font-medium'>Live Update</h1>
+        <Card className="fixed top-0 z-40 pt-32 w-full max-w-[16rem] rounded-none left-0 h-screen shadow-xl shadow-blue-gray-900/5">
+            <div className='flex flex-col justify-start px-8'>
+                <div className="mb-12">
+                    <Typography variant="h5" color="blue-gray">
+                        Filter Settings
+                    </Typography>
                 </div>
 
-                <div className="my-6">
-                    <p className='mb-4 font-bold'>Canton</p>
-                    <ListBox selectedElement={selectedCanton} elements={cantons} onSelectedElementChanged={setSelectedCanton} />
-                </div>
+                <div className="mb-1 flex flex-col gap-12">
+                    <Select variant="outlined" label="Select Canton" value={selectedCanton} onChange={setSelectedCanton}>
+                        {
+                            cantons.map(c => (<Option value={c} key={c}>{c}</Option>))
+                        }
+                    </Select>
 
-                <div className="my-6">
-                    <p className='mb-4 font-bold'>Time Range</p>
-                    <ListBox selectedElement={selectedTimeRange} elements={timeRanges} onSelectedElementChanged={setSelectedTimeRange} />
-                </div>
+                    <Select variant="outlined" label="Select Time" value={selectedTimeRange} onChange={setSelectedTimeRange}>
+                        {
+                            timeRanges.map(t => (<Option value={t} key={t}>{t}</Option>))
+                        }
+                    </Select>
 
-                <div className="my-6">
-                    <p className='mb-4 font-bold'>Direction</p>
-                    <ListBox selectedElement={selectedDirection} elements={directions} onSelectedElementChanged={setSelectedDirection} />
-                </div>
+                    <Select variant="outlined" label="Select Vehicle Type" value={selectedVehicleType} onChange={setSelectedVehicleType}>
+                        {
+                            vehicleTypes.map(v => (<Option value={v} key={v}>{v}</Option>))
+                        }
+                    </Select>
 
-                <div className="my-6">
-                    <p className='mb-4 font-bold'>Vehicle Type</p>
-                    <ListBox selectedElement={selectedVehicleType} elements={vehicleTypes} onSelectedElementChanged={setSelectedVehicleType} />
-                </div>
+                    <Select variant="outlined" label="Select Direction" value={selectedDirection} onChange={setSelectedDirection}>
+                        {
+                            directions.map(d => (<Option value={d} key={d}>{d}</Option>))
+                        }
+                    </Select>
 
-                <div className='my-8'>
-                    <button
-                        type="button"
-                        onClick={publishFilterSettings}
-                        className="w-full rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-blue-300"
-                    >
+                    <Button className="mt-6" fullWidth onClick={publishFilterSettings}>
                         Apply Filter
-                    </button>
+                    </Button>
+
                 </div>
-
-
-
             </div>
-        </div>
 
 
+        </Card>
     );
 }

@@ -18,7 +18,7 @@ export default function HeatmapChart() {
         dataLabels: {
             enabled: false
         },
-        colors: ["#008FFB"],
+        colors: ["#16a34a"],
     };
 
     const SERIES = [{

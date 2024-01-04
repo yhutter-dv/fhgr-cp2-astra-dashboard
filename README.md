@@ -134,21 +134,21 @@ InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
 
 ## Used Ressources
 
-| Link                                                                                                                           | Description                                                              |
-| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| [Why a .env?](https://blog.devgenius.io/why-a-env-7b4a79ba689)                                                                 | Contains useful information what .env files are and how they can be used |
-| [Open-Data-Plattform Mobilität Schweiz](https://opentransportdata.swiss/de/strassenverkehr/)                                   | API in order to retrieve Realtime Data on Mobility related topics        |
-| [Make SOAP Requests](https://www.geeksforgeeks.org/making-soap-api-calls-using-python/)                                        | How to make SOAP Requests in Python                                      |
-| [Speed up XML Parsing in Python](https://nickjanetakis.com/blog/how-i-used-the-lxml-library-to-parse-xml-20x-faster-in-python) | A good ressource for speeding up XML Parsing in Python                   |
-| [FastAPI](https://github.com/tiangolo/fastapi)                                                                                 | A really fast REST API Library (pun intended) written in Python          |
-| [FastAPI CORS](https://fastapi.tiangolo.com/tutorial/cors/)                                                                    | Allow CORS in FastAPI                                                    |
-| [FastAPI in Docker](https://fastapi.tiangolo.com/deployment/docker/)                                                           | How to setup FastAPI inside a Docker Container                           |
-| [InfluxDB in Docker](https://hub.docker.com/_/influxdb)                                                                        | How to setup InfluxDB inside a Docker Container                          |
-| [InfluxDB Python Client](https://github.com/influxdata/influxdb-client-python)                                                 | Sample Repo for working with InfluxDB and Python                         |
-| [React](https://react.dev/)                                                                                                    | React Framework                                                          |
-| [Tailwind](https://tailwindcss.com/)                                                                                           | A CSS Framework to build UIs.                                            |
-| [Heroicons](https://heroicons.com/)                                                                                            | Nice Icons designed by the makes of Tailwind                             |
-| [React Map GL](https://visgl.github.io/react-map-gl/)                                                                          | Map Library for efficiently rendering lots of data points                |
-| [Apex Charts](https://apexcharts.com/)                                                                                         | Chart Library with lots of different chart types.                        |
-| [Vite](https://vitejs.dev/guide/)                                                                                              | Super fast Web Bundler.                                                  |
-| [Vite Environment Variables](https://vitejs.dev/guide/env-and-mode)                                                            | How to use environment variables in Vite.                                |
+| Link                                                                                                                           | Description                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| [Why a .env?](https://blog.devgenius.io/why-a-env-7b4a79ba689)                                                                 | Contains useful information what .env files are and how they can be used       |
+| [Open-Data-Plattform Mobilität Schweiz](https://opentransportdata.swiss/de/strassenverkehr/)                                   | API in order to retrieve Realtime Data on Mobility related topics              |
+| [Make SOAP Requests](https://www.geeksforgeeks.org/making-soap-api-calls-using-python/)                                        | How to make SOAP Requests in Python                                            |
+| [Speed up XML Parsing in Python](https://nickjanetakis.com/blog/how-i-used-the-lxml-library-to-parse-xml-20x-faster-in-python) | A good ressource for speeding up XML Parsing in Python                         |
+| [FastAPI](https://github.com/tiangolo/fastapi)                                                                                 | A really fast REST API Library (pun intended) written in Python                |
+| [FastAPI CORS](https://fastapi.tiangolo.com/tutorial/cors/)                                                                    | Allow CORS in FastAPI                                                          |
+| [FastAPI in Docker](https://fastapi.tiangolo.com/deployment/docker/)                                                           | How to setup FastAPI inside a Docker Container                                 |
+| [InfluxDB in Docker](https://hub.docker.com/_/influxdb)                                                                        | How to setup InfluxDB inside a Docker Container                                |
+| [InfluxDB Python Client](https://github.com/influxdata/influxdb-client-python)                                                 | Sample Repo for working with InfluxDB and Python                               |
+| [React](https://react.dev/)                                                                                                    | React Framework                                                                |
+| [Material Tailwind](https://www.material-tailwind.com/)                                                                        | A Component Library based on Tailwind and Google Material Design to build UIs. |
+| [Heroicons](https://heroicons.com/)                                                                                            | Nice Icons designed by the makes of Tailwind                                   |
+| [React Map GL](https://visgl.github.io/react-map-gl/)                                                                          | Map Library for efficiently rendering lots of data points                      |
+| [Apex Charts](https://apexcharts.com/)                                                                                         | Chart Library with lots of different chart types.                              |
+| [Vite](https://vitejs.dev/guide/)                                                                                              | Super fast Web Bundler.                                                        |
+| [Vite Environment Variables](https://vitejs.dev/guide/env-and-mode)                                                            | How to use environment variables in Vite.                                      |
