@@ -4,8 +4,20 @@ import {
 } from "@material-tailwind/react";
 import { useState } from "react";
 
+type Props = {
+    onLiveModeChanged: (liveModeEnabled: boolean) => void;
+}
+
+
 // Implemented with reference to: https://www.material-tailwind.com/docs/react/navbar
-export default function Header() {
+export default function Header({ onLiveModeChanged }: Props) {
+
+
+    function publishOnLiveModeChanged(liveModeEnabled: boolean) {
+        setLiveModeEnabled(liveModeEnabled);
+        onLiveModeChanged(liveModeEnabled);
+    }
+
     const [liveModeEnabled, setLiveModeEnabled] = useState<boolean>(true);
 
     return (
@@ -17,7 +29,7 @@ export default function Header() {
                         Astra Dashboard
                     </p>
                 </div>
-                <Switch checked={liveModeEnabled} onChange={e => setLiveModeEnabled(e.target.checked)} label="Automatic Update" crossOrigin={undefined} />
+                <Switch checked={liveModeEnabled} onChange={e => publishOnLiveModeChanged(e.target.checked)} label="Automatic Update" crossOrigin={undefined} />
             </div>
         </Navbar>
     );

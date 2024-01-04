@@ -1,5 +1,5 @@
 // Implemented with reference to https://visgl.github.io/react-map-gl/examples/controls
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Map, {
   Marker,
   FullscreenControl,
@@ -14,28 +14,10 @@ type Props = {
   stations: Array<Station>
 }
 
-
 export default function MapLibreStationMap({ stations }: Props) {
 
   const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
   const STYLE = "mapbox://styles/mapbox/streets-v12";
-
-  const STATIONS: Array<Station> = [
-    {
-      latitude: 47.36667,
-      longitude: 8.55,
-      name: "Zürich",
-      numberOfErrors: 0
-    },
-    {
-      latitude: 46.947456,
-      longitude: 7.451123,
-      name: "Bern",
-      numberOfErrors: 10
-    }
-  ];
-
-  const MARKERS = STATIONS.map(s => createStationMarker(s));
 
   function createStationMarker(station: Station): StationMarker {
     return {
@@ -45,7 +27,13 @@ export default function MapLibreStationMap({ stations }: Props) {
   }
 
   const [popupInfo, setPopupInfo] = useState<Station | undefined>(undefined);
-  const [stationMarkers, setStationMarkers] = useState<Array<StationMarker>>(MARKERS);
+  const [stationMarkers, setStationMarkers] = useState<Array<StationMarker>>([]);
+
+  useEffect(() => {
+    const markers = stations.map(s => createStationMarker(s));
+    setStationMarkers([...markers]);
+  }, [stations])
+
 
   const iconForMarker = (marker: StationMarker) => {
     if (marker.station.numberOfErrors > 0) {
