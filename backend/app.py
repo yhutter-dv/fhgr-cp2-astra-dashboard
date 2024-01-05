@@ -12,15 +12,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import os
 import json
 import sys
-import time
-from random import random
 from datetime import datetime
 from request_models import *
 from defaults import *
 
 def ensure_file(file_path):
     if not os.path.isfile(file_path):
-        system.exit(f"Expected file '{file_path}' but was not found...")
+        sys.exit(f"Expected file '{file_path}' but was not found...")
 
 def read_mst_from_file():
     ensure_file(MST_FILE_PATH)
@@ -130,7 +128,18 @@ BUCKET = "fhgr-cp2-bucket"
 UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS = '*/5' # CRON Job notation, e.g every 5 seconds
 SECRETS = load_secrets()
 MST = read_mst_from_file()
-CANTONS = list(set([station["canton"] for station in MST]))
+
+ALL_CANTONS = "all"
+CANTON_NAMES = list(set([station["canton"] for station in MST]))
+CANTONS = [{
+    "label": "All Cantons",
+    "value": ALL_CANTONS
+}]
+
+CANTONS += [{"label": canton_name, "value": canton_name} for canton_name in CANTON_NAMES]
+
+
+print("Cantons are ", CANTONS)
 
 app = create_app()
 db_client = connect_to_db()
@@ -149,11 +158,14 @@ def on_shutdown():
 @app.post("/stations")
 async def post_stations(stationsBody: StationsBody):
     stations = []
-    has_canton = stationsBody.canton != None and stationsBody.canton != ""
-    if not has_canton:
+    all_cantons = stationsBody.canton == ALL_CANTONS
+    print("Got ", stationsBody.canton)
+    if all_cantons:
         # Do not filter stations
+        print("Not filtering any cantons when doing stations request")
         stations = MST
     else:
+        print("Filtering cantons when doing stations request")
         stations = [station for station in MST if station["canton"] == stationsBody.canton]
 
     # Query influx to get the number of errors for each station
@@ -161,10 +173,8 @@ async def post_stations(stationsBody: StationsBody):
         api = db_client.query_api()
         time_str = get_value_or_default(stationsBody.time, DEFAULT_TIME_RANGE)
 
-        number_of_errors_per_station = []
-
         query = ""
-        if has_canton:
+        if ALL_CANTONS:
             query = """
                 from(bucket: "fhgr-cp2-bucket")
                     |> range(start: %time%)

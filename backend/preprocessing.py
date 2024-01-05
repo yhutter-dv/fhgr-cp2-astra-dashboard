@@ -4,10 +4,16 @@ import json
 import requests
 from dotenv import dotenv_values
 import csv
+import sys
+from pyproj import Transformer
 
 def ensure_file(file_path):
     if not os.path.isfile(file_path):
-        system.exit(f"Expected file '{file_path}' but was not found...")
+        sys.exit(f"Expected file '{file_path}' but was not found...")
+
+def convert_east_north_to_long_lat(east_lv95, north_lv95):
+    lat, lon = TRANSFORMER.transform(east_lv95, north_lv95)
+    return (lon, lat)
 
 def load_detector_names():
     ensure_file(DETECTOR_NAMES_FILE_PATH)
@@ -48,6 +54,9 @@ DETECTOR_NAMES = load_detector_names()
 # Load the mapping so we know which detector id is mapped to which canton
 DETECTOR_ID_TO_CANTON_MAPPING = load_detector_id_to_canton_mapping()
 
+# Needed to convert from Swiss LV95 coordinate system to WGS84 (Longitude, Latitude)
+TRANSFORMER = Transformer.from_crs("EPSG:2056", "EPSG:4326")
+
 def detector_id_to_station_id(detector_id):
     # Dectector Id: CH:0002.01
     # Station Id: CH:0002
@@ -78,10 +87,15 @@ def enrich_stations(stations):
     for station in stations:
         station_id = station["numberId"]
         mst_location_information_for_station = mst_location_information[station_id]
+        eastLv95 = mst_location_information_for_station["eastLv95"]
+        northLv95 = mst_location_information_for_station["northLv95"]
+        longitude, latitude = convert_east_north_to_long_lat(eastLv95, northLv95)
         station["name"] = mst_location_information_for_station["name"]
         station["canton"] = mst_location_information_for_station["canton"]
-        station["eastLv95"] = mst_location_information_for_station["eastLv95"]
-        station["northLv95"] = mst_location_information_for_station["northLv95"]
+        station["eastLv95"] = eastLv95
+        station["northLv95"] = northLv95
+        station["longitude"] = longitude
+        station["latitude"] = latitude
 
     return stations
 
@@ -118,6 +132,8 @@ def parse_mst(xml_content):
                                "numberId": number_id,
                                "eastLv95": None,
                                "northLv95": None,
+                               "longitude": None,
+                               "latitude": None,
                                "detectors": []
                                }
 
@@ -133,8 +149,8 @@ def parse_mst(xml_content):
         detector = {
             "id": node.attrib["id"],
             "characteristics": [],
-            "latitude": latitude_node.text,
-            "longitude": longitude_node.text
+            "latitude": float(latitude_node.text),
+            "longitude": float(longitude_node.text)
         }
 
         characteristics = []
@@ -148,11 +164,11 @@ def parse_mst(xml_content):
             period_nodes = characteristic_node.xpath(
                 ".//dx223:period", namespaces=ns)
             if len(period_nodes) > 0:
-                characteristic["period"] = period_nodes[0].text
+                characteristic["period"] = int(period_nodes[0].text)
             else:
                 print(
                     f"Could not find a period for characteristic with index {index} for detector {detector['id']}")
-                characteristic["period"] = None
+                characteristic["period"] = -1
             measurement_nodes = characteristic_node.xpath(
                 ".//dx223:specificMeasurementValueType", namespaces=ns)
             if len(measurement_nodes) > 0:
@@ -187,12 +203,12 @@ def parse_mst(xml_content):
 
         if len(specific_location_id_nodes) > 0:
             location_id = specific_location_id_nodes[0].text
-            detector["locationId"] = location_id
+            detector["locationId"] = int(location_id)
             detector["name"] = DETECTOR_NAMES.get(location_id, None)
         else:
             print(
                 f"Could not find a location id for detector {detector['id']}")
-            detector["locationId"] = ""
+            detector["locationId"] = -1
 
         detector["characteristics"] = characteristics
         current_station["detectors"].append(detector)
