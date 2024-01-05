@@ -1,14 +1,16 @@
+import { ApexOptions } from "apexcharts";
 import Chart from "react-apexcharts";
+import { PRIMARY_COLOR } from "../utils/colors";
 
 export default function TrafficSpeedLineChart() {
-    const OPTIONS = {
+    const OPTIONS: ApexOptions = {
         chart: {
             id: "basic-bar"
         },
         xaxis: {
             categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998]
         },
-        colors: ["#020617"],
+        colors: [PRIMARY_COLOR],
         stroke: {
             lineCap: "round",
             curve: "smooth",

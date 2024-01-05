@@ -1,4 +1,6 @@
+import { ApexOptions } from "apexcharts";
 import Chart from "react-apexcharts";
+import { PRIMARY_COLOR } from "../utils/colors";
 
 
 export default function HeatmapChart() {
@@ -11,14 +13,14 @@ export default function HeatmapChart() {
         return elements;
     }
 
-    const OPTIONS = {
+    const OPTIONS: ApexOptions = {
         chart: {
             id: "heatmap-chart"
         },
         dataLabels: {
             enabled: false
         },
-        colors: ["#16a34a"],
+        colors: [PRIMARY_COLOR],
     };
 
     const SERIES = [{
