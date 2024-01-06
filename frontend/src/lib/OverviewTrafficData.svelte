@@ -1,6 +1,7 @@
 <script>
     import ApexCharts from "apexcharts";
     import { onMount } from "svelte";
+    import { CHART_PRIMARY_COLOR } from "../utils/colors";
 
     function generateData(numberOfElements, config) {
         let data = [];
@@ -86,10 +87,7 @@
         dataLabels: {
             enabled: false,
         },
-        colors: ["#008FFB"],
-        title: {
-            text: "HeatMap Chart (Single color)",
-        },
+        colors: [CHART_PRIMARY_COLOR],
     };
 
     onMount(() => {

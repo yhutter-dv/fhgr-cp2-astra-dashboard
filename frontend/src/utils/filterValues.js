@@ -14,6 +14,10 @@ const TIME_RANGES = [
     {
         label: "Last Week",
         value: "-7d"
+    },
+    {
+        label: "Last Month",
+        value: "-30d"
     }
 ];
 

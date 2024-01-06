@@ -29,3 +29,5 @@ export const CANTON_COLOR_MAP = {
 }
 
 export const SELECTED_COLOR = "text-white";
+
+export const CHART_PRIMARY_COLOR = "#3b82f6"
