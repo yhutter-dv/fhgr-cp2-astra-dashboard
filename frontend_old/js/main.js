@@ -3,7 +3,7 @@ import Chart from 'chart.js/auto';
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 
 // Global variables
-const apiBaseUrl = "http://localhost:8000";
+const apiBaseUrl = "http://localhost:6969";
 const selectedMarkerColor = "#1a5fb4";
 const updateIntervalMs = 1000;
 
@@ -347,7 +347,7 @@ async function onLoad() {
     toggleLiveUpdateForLineChartTrafficFlow(checkboxLiveModeLineChartForTrafficFlow.checked);
 
     // Trigger inital change manually so the map gets updated properly 
-    onCantonsDropDownChanged(cantonsDropDown.options[cantonsDropDown.selectedIndex].value, map, layerControl);
+    onCantonsDropDownChanged("ZH", map, layerControl);
     onDirectionDropDownChanged(directionDropDown.options[directionDropDown.selectedIndex].value);
     onTimeRangeDropDownChanged(timeRangeDropDown.options[timeRangeDropDown.selectedIndex].value);
     onVehicleTypeDropDownChanged(vehicleTypeDropDown.options[vehicleTypeDropDown.selectedIndex].value);
