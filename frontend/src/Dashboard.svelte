@@ -7,30 +7,32 @@
   import TrafficFlow from "./lib/TrafficFlow.svelte";
   import TrafficSpeed from "./lib/TrafficSpeed.svelte";
   import OverviewTrafficData from "./lib/OverviewTrafficData.svelte";
-  import { trafficFlowMeasurements } from "./stores/dashboardStore";
+  import {
+    trafficFlowMeasurements,
+    stationsWithNumberOfErrorsPerCanton,
+    cantons,
+    selectedStation,
+  } from "./stores/dashboardStore";
   import { get } from "svelte/store";
 
-  let cantons = [];
-  let stations = [];
-  let numberOfErrorsPerCanton = [];
-  let selectedStation = null;
   let filterSettings = DEFAULT_FILTER_SETTINGS;
-
-  let trafficFlowOverlayText = "Please choose at least one Station on the Map.";
-  let showTrafficFlowOverlay = true;
 
   const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   onMount(async () => {
-    await getCantons();
-    await getNumberOfErrorsForCantons();
-    await getStations();
-    updateOverlays();
+    const cantonsResult = await getCantons();
+    cantons.set([...cantonsResult]);
+    stationsWithNumberOfErrorsPerCanton.set(
+      await getStationsWithNumberOfErrorsPerCanton(),
+    );
   });
 
-  function getDetectorsWithIndexAccordingToFilterValues(measurementType) {
+  function getDetectorsWithIndexAccordingToFilterValues(
+    measurementType,
+    station,
+  ) {
     // First get the detectors with the matching direction
-    const detectorsWithValidDirection = selectedStation.detectors.filter(
+    const detectorsWithValidDirection = station.detectors.filter(
       (d) => d.direction === filterSettings.direction,
     );
 
@@ -46,7 +48,7 @@
         console.warn("Got more then one index...");
       }
       // In case of an error the index must be zero
-      const index = selectedStation.numberOfErrors > 0 ? 0 : validIndices[0];
+      const index = station.numberOfErrors > 0 ? 0 : validIndices[0];
       return {
         id: d.id,
         index: index,
@@ -55,36 +57,38 @@
     return detectorsWithIndex;
   }
 
-  function updateOverlays() {
-    const flowData = get(trafficFlowMeasurements);
-    const hasData =
-      flowData.length > 0 && flowData.some((d) => d.measurements.length > 0);
-    console.log("Has Data is", hasData);
-    showTrafficFlowOverlay = selectedStation === null || hasData === false;
-    if (selectedStation === null) {
-      trafficFlowOverlayText = "Please choose at least one Station on the Map.";
-    } else if (hasData === false) {
-      trafficFlowOverlayText = "No Data found...";
-    }
-  }
-
   async function onApplyFilter(settings) {
     filterSettings = { ...settings };
-    getStations();
-    const detectorsWithIndex =
-      getDetectorsWithIndexAccordingToFilterValues("trafficFlow");
-    await getDetectorMeasurements(detectorsWithIndex);
-    updateOverlays();
+
+    // Clear measurement data...
+    trafficFlowMeasurements.set([]);
+
+    stationsWithNumberOfErrorsPerCanton.set(
+      await getStationsWithNumberOfErrorsPerCanton(),
+    );
+
+    // Only try get data if a station is selected.
+    const station = get(selectedStation);
+    if (station === null) {
+      console.warn("No stations is selected, will no try getting data...");
+      return;
+    }
+    const trafficFlowDetectorsWithIndices =
+      getDetectorsWithIndexAccordingToFilterValues("trafficFlow", station);
+    const trafficFlow = await getDetectorMeasurements(
+      trafficFlowDetectorsWithIndices,
+    );
+    trafficFlowMeasurements.set(trafficFlow);
   }
 
   function selectedStationChanged(station) {
-    selectedStation = station;
+    selectedStation.set(station);
   }
 
   async function getCantons() {
     const response = await fetch(`${API_BASE_URL}/cantons`);
     const result = await response.json();
-    cantons = [...result];
+    return result;
   }
 
   async function getDetectorMeasurements(detectorsWithIndex) {
@@ -100,7 +104,17 @@
       },
     });
     const result = await response.json();
-    trafficFlowMeasurements.set([...result]);
+    return result;
+  }
+
+  async function getStationsWithNumberOfErrorsPerCanton() {
+    const stations = await getStations();
+    const numberOfErrorsPerCanton = await getNumberOfErrorsForCantons();
+    const result = {
+      stations: stations,
+      numberOfErrorsPerCanton: numberOfErrorsPerCanton,
+    };
+    return result;
   }
 
   async function getStations() {
@@ -116,7 +130,7 @@
       },
     });
     const result = await response.json();
-    stations = [...result];
+    return result;
   }
 
   async function getNumberOfErrorsForCantons() {
@@ -132,16 +146,13 @@
       },
     });
     const result = await response.json();
-    numberOfErrorsPerCanton = [...result];
+    return result;
   }
 </script>
 
 <main>
   <Header />
-  <FilterSidebar
-    {cantons}
-    on:applyFilter={(e) => onApplyFilter(e.detail.settings)}
-  />
+  <FilterSidebar on:applyFilter={(e) => onApplyFilter(e.detail.settings)} />
 
   <!-- Dashboard Content -->
   <div class="relative left-0 top-32 px-4 pl-64">
@@ -153,8 +164,6 @@
         </div>
         <div class="h-96">
           <StationMap
-            {stations}
-            {numberOfErrorsPerCanton}
             on:selectedStationChanged={(e) =>
               selectedStationChanged(e.detail.selected)}
           />
@@ -165,10 +174,7 @@
         <div class="flex flex-row justify-between mb-4">
           <p class="font-semibold">Traffic Flow</p>
         </div>
-        <TrafficFlow
-          showOverlay={showTrafficFlowOverlay}
-          overlayText={trafficFlowOverlayText}
-        />
+        <TrafficFlow />
       </div>
 
       <div class="bg-white p-4 rounded shadow-lg">

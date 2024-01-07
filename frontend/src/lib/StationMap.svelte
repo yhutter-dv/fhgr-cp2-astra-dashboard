@@ -1,32 +1,10 @@
 <script>
     import L from "leaflet";
     import "leaflet-tilelayer-swiss";
-    import { onMount } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
     import { CANTON_COLOR_MAP, SELECTED_COLOR } from "../utils/colors";
     import { ICON_MAP } from "../utils/icons";
-    import { createEventDispatcher } from "svelte";
-
-    export let stations = [];
-
-    export let numberOfErrorsPerCanton = [];
-    $: {
-        // Remove all markers
-        stationsLayer.clearLayers();
-        stations.forEach((station) => {
-            // Add number of errors per canton as property -> Look it up via the canton property of the station itself
-            const matches = numberOfErrorsPerCanton.filter(
-                (e) => e.canton === station.canton,
-            );
-            if (matches.length > 0) {
-                station.numberOfErrorsForCanton = matches[0].numberOfErrors;
-            } else {
-                // Here we assume that no errors are there otherwise we would have had a match
-                station.numberOfErrorsForCanton = 0;
-            }
-            const marker = createStationMarker(station);
-            stationsLayer.addLayer(marker);
-        });
-    }
+    import { stationsWithNumberOfErrorsPerCanton } from "../stores/dashboardStore";
 
     const dispatch = createEventDispatcher();
 
@@ -36,12 +14,8 @@
     let lastSelectedMarker = null;
     let selectedMarker = null;
     let selectedStation = null;
-    $: {
-        dispatch("selectedStationChanged", {
-            selected: selectedStation,
-        });
-    }
     let markerSelected = false;
+    let stationsWithNumberOfErrorsPerCantonSubscription = null;
 
     function setupMap() {
         // Create map and attach id to element with id "mapid"
@@ -67,6 +41,39 @@
         return { map, layerControl };
     }
 
+    function recreateMarkers(stations, numberOfErrorsPerCanton) {
+        // Remove all markers
+        stationsLayer.clearLayers();
+        stations.forEach((station) => {
+            // Add number of errors per canton as property -> Look it up via the canton property of the station itself
+            const matches = numberOfErrorsPerCanton.filter(
+                (e) => e.canton === station.canton,
+            );
+            if (matches.length > 0) {
+                station.numberOfErrorsForCanton = matches[0].numberOfErrors;
+            } else {
+                // Here we assume that no errors are there otherwise we would have had a match
+                station.numberOfErrorsForCanton = 0;
+            }
+            // Preserve selected and last selected marker (if set)
+            const isSelectedMarker =
+                selectedMarker !== null &&
+                station.id === selectedMarker.station.id;
+            const isLastSelectedmarker =
+                lastSelectedMarker !== null &&
+                station.id === lastSelectedMarker.station.id;
+
+            const marker = createStationMarker(station, isSelectedMarker);
+
+            if (isSelectedMarker) {
+                selectedMarker = marker;
+            } else if (isLastSelectedmarker) {
+                lastSelectedMarker = marker;
+            }
+            stationsLayer.addLayer(marker);
+        });
+    }
+
     function createMarkerIcon(station, isSelected = false) {
         // Depending on the number of errors we show a different icon and modify the color
         const icon =
@@ -79,14 +86,14 @@
         return markerIcon;
     }
 
-    function createStationMarker(station) {
+    function createStationMarker(station, selected = false) {
         const eastCoordinate = station.eastLv95;
         const northCoordinate = station.northLv95;
         const popup = L.popup().setContent(
             `<p><b>${station.name}</b></p><p>Errors: ${station.numberOfErrors} out of ${station.numberOfErrorsForCanton} errors total for canton ${station.canton}</p>`,
         );
 
-        const markerIcon = createMarkerIcon(station);
+        const markerIcon = createMarkerIcon(station, selected);
         const marker = L.marker(
             L.CRS.EPSG2056.unproject(L.point(eastCoordinate, northCoordinate)),
             { icon: markerIcon },
@@ -116,12 +123,25 @@
         selectedMarker.setIcon(markerIcon);
         // Read back station which is associated with the marker.
         selectedStation = markerSelected ? selectedMarker.station : null;
+
+        dispatch("selectedStationChanged", {
+            selected: selectedStation,
+        });
     }
 
     onMount(() => {
         const { map, layerControl } = setupMap();
         leafletMap = map;
         leafletLayerControl = layerControl;
+
+        stationsWithNumberOfErrorsPerCantonSubscription =
+            stationsWithNumberOfErrorsPerCanton.subscribe((data) => {
+                recreateMarkers(data.stations, data.numberOfErrorsPerCanton);
+            });
+    });
+
+    onDestroy(() => {
+        stationsWithNumberOfErrorsPerCantonSubscription();
     });
 </script>
 

@@ -2,13 +2,19 @@
     import ApexCharts from "apexcharts";
     import { onDestroy, onMount } from "svelte";
     import Overlay from "./Overlay.svelte";
-    import { trafficFlowMeasurements } from "../stores/dashboardStore";
+    import {
+        trafficFlowMeasurements,
+        selectedStation,
+    } from "../stores/dashboardStore";
 
-    export let showOverlay = false;
-    export let overlayText = "";
+    let overlayText = "Please choose at least one Station on the Map.";
+    let showOverlay = true;
 
     let apexChart = null;
     let trafficFlowSubscription = null;
+    let selectedStationSubscription = null;
+    let trafficFlowData = [];
+    let selectedStationData = null;
 
     // Implemented with reference to: https://apexcharts.com/javascript-chart-demos/area-charts/spline/
     const OPTIONS = {
@@ -33,13 +39,25 @@
         },
     };
 
-    function updateData(data) {
+    function updateOverlay() {
+        const hasData =
+            trafficFlowData.length > 0 &&
+            trafficFlowData.some((d) => d.measurements.length > 0);
+        showOverlay = selectedStationData === null || hasData === false;
+        if (selectedStationData === null) {
+            overlayText = "Please choose at least one Station on the Map.";
+        } else if (hasData === false) {
+            overlayText = "No Data found...";
+        }
+    }
+
+    function updateData() {
         console.log(apexChart);
         if (apexChart === null) {
             console.warn("Apex Chart reference is still null...");
             return;
         }
-        const newSeries = data.map((m) => {
+        const newSeries = trafficFlowData.map((m) => {
             return {
                 name: m.id,
                 data: m.measurements.map((e) => {
@@ -56,15 +74,25 @@
             document.getElementById("traffic-flow-chart"),
             OPTIONS,
         );
-        console.log("Created new instance of apex chart ref...");
         apexChart.render();
 
         trafficFlowSubscription = trafficFlowMeasurements.subscribe((data) => {
-            updateData(data);
+            trafficFlowData = data;
+            updateData();
+            updateOverlay();
+        });
+
+        selectedStationSubscription = selectedStation.subscribe((data) => {
+            selectedStationData = data;
+            updateOverlay();
         });
     });
 
-    onDestroy(trafficFlowSubscription);
+    onDestroy(() => {
+        // Unsubscribe
+        trafficFlowSubscription();
+        selectedStationSubscription();
+    });
 </script>
 
 <div class="relative">

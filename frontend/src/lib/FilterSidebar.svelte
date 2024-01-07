@@ -1,9 +1,8 @@
 <script>
     import { FILTER_VALUE_MAP } from "../utils/filterValues";
     import SelectBox from "./SelectBox.svelte";
-    import { createEventDispatcher } from "svelte";
-
-    export let cantons = [];
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
+    import { cantons } from "../stores/dashboardStore";
 
     const timeRanges = FILTER_VALUE_MAP.timeRanges.values;
     const directions = FILTER_VALUE_MAP.directions.values;
@@ -15,6 +14,8 @@
     let selectedTimeRange = FILTER_VALUE_MAP.timeRanges.default;
     let selectedDirection = FILTER_VALUE_MAP.directions.default;
     let selectedVehicleType = FILTER_VALUE_MAP.vehicleTypes.default;
+    let cantonsData = [];
+    let cantonsSubscription = null;
 
     function selectedCantonChanged(canton) {
         selectedCanton = canton;
@@ -44,6 +45,16 @@
             settings: filterSettings,
         });
     }
+
+    onMount(() => {
+        cantonsSubscription = cantons.subscribe((data) => {
+            cantonsData = data;
+        });
+    });
+
+    onDestroy(() => {
+        cantonsSubscription();
+    });
 </script>
 
 <div
@@ -55,7 +66,7 @@
         <div>
             <p class="font-medium text-lg mb-4">Canton</p>
             <SelectBox
-                elements={cantons}
+                elements={cantonsData}
                 on:selectionChanged={(e) =>
                     selectedCantonChanged(e.detail.selected)}
             />
