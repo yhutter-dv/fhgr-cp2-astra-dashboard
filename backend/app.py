@@ -227,6 +227,7 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
         detector_measurements_result = []
         for detector_measurement in detector_measurements:
             id = detector_measurement.id
+            name = detector_measurement.name
             index = detector_measurement.index
             query = """
                 from(bucket: "fhgr-cp2-bucket")
@@ -249,11 +250,12 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
                     "hasError": False if record["hasError"] == "False" else True
                 }
                 measurements.append(measurement)
-            detector_measurement = {
+            result = {
                 "id": id,
+                "name": name,
                 "measurements": measurements
             }
-            detector_measurements_result.append(detector_measurement)
+            detector_measurements_result.append(result)
         return detector_measurements_result
     except Exception as error:
         print(error)

@@ -27,21 +27,17 @@
     );
   });
 
-  function getDetectorsWithIndexAccordingToFilterValues(
-    measurementType,
-    station,
-  ) {
+  function getDetectors(measurementType, station, vehicleType, direction) {
     // First get the detectors with the matching direction
     const detectorsWithValidDirection = station.detectors.filter(
-      (d) => d.direction === filterSettings.direction,
+      (d) => d.direction === direction,
     );
 
     // Next filter by vehicle type and measurement and get out corresponding indices
     const detectorsWithIndex = detectorsWithValidDirection.map((d) => {
       const validCharacteristics = d.characteristics.filter(
         (c) =>
-          c.measurement === measurementType &&
-          c.vehicleType === filterSettings.vehicleType,
+          c.measurement === measurementType && c.vehicleType === vehicleType,
       );
       const validIndices = validCharacteristics.map((c) => c.index);
       if (validIndices.length > 1) {
@@ -52,6 +48,7 @@
       return {
         id: d.id,
         index: index,
+        name: d.name,
       };
     });
     return detectorsWithIndex;
@@ -73,8 +70,12 @@
       console.warn("No stations is selected, will no try getting data...");
       return;
     }
-    const trafficFlowDetectorsWithIndices =
-      getDetectorsWithIndexAccordingToFilterValues("trafficFlow", station);
+    const trafficFlowDetectorsWithIndices = getDetectors(
+      "trafficFlow",
+      station,
+      filterSettings.vehicleType,
+      filterSettings.direction,
+    );
     const trafficFlow = await getDetectorMeasurements(
       trafficFlowDetectorsWithIndices,
     );
@@ -157,39 +158,16 @@
   <!-- Dashboard Content -->
   <div class="relative left-0 top-32 px-4 pl-64">
     <div class="grid grid-cols-1 xl:grid-cols-2 grid-flow-row gap-4 px-4">
-      <!-- Station Map (needs defined height, e.g h-96) -->
-      <div class="bg-white p-4 rounded shadow-lg">
-        <div class="flex flex-row justify-between mb-4">
-          <p class="font-semibold">Station Map</p>
-        </div>
-        <div class="h-96">
-          <StationMap
-            on:selectedStationChanged={(e) =>
-              selectedStationChanged(e.detail.selected)}
-          />
-        </div>
-      </div>
+      <StationMap
+        on:selectedStationChanged={(e) =>
+          selectedStationChanged(e.detail.selected)}
+      />
 
-      <div class="bg-white p-4 rounded shadow-lg">
-        <div class="flex flex-row justify-between mb-4">
-          <p class="font-semibold">Traffic Flow</p>
-        </div>
-        <TrafficFlow />
-      </div>
+      <TrafficFlow />
 
-      <div class="bg-white p-4 rounded shadow-lg">
-        <div class="flex flex-row justify-between mb-4">
-          <p class="font-semibold">Traffic Speed</p>
-        </div>
-        <TrafficSpeed />
-      </div>
+      <TrafficSpeed />
 
-      <div class="bg-white p-4 rounded shadow-lg">
-        <div class="flex flex-row justify-between mb-4">
-          <p class="font-semibold">Overview Traffic Data</p>
-        </div>
-        <OverviewTrafficData />
-      </div>
+      <OverviewTrafficData />
     </div>
   </div>
 </main>

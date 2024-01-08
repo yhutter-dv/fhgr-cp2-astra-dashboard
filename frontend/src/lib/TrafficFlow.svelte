@@ -9,6 +9,7 @@
 
     let overlayText = "Please choose at least one Station on the Map.";
     let showOverlay = true;
+    let title = "Traffic Flow";
 
     let apexChart = null;
     let trafficFlowSubscription = null;
@@ -33,11 +34,35 @@
             type: "datetime",
         },
         tooltip: {
+            y: {
+                formatter: function (
+                    value,
+                    { series, seriesIndex, dataPointIndex, w },
+                ) {
+                    const data =
+                        w.globals.initialSeries[seriesIndex].data[
+                            dataPointIndex
+                        ];
+                    const errorReasonText =
+                        data.errorReason !== null
+                            ? `Error Reason: ${data.errorReason}`
+                            : "";
+                    return `Traffic Flow: ${value} ${errorReasonText}`;
+                },
+            },
             x: {
                 format: "dd/MM/yy HH:mm",
             },
         },
     };
+
+    function updateTitle() {
+        if (selectedStationData) {
+            title = `Traffic Flow for ${selectedStationData.name}`;
+        } else {
+            title = `Traffic Flow`;
+        }
+    }
 
     function updateOverlay() {
         const hasData =
@@ -52,20 +77,23 @@
     }
 
     function updateData() {
-        console.log(apexChart);
         if (apexChart === null) {
             console.warn("Apex Chart reference is still null...");
             return;
         }
         const newSeries = trafficFlowData.map((m) => {
+            const name = m.name !== null ? `${m.id} (${m.name})` : m.id;
             return {
-                name: m.id,
+                name: name,
                 data: m.measurements.map((e) => {
-                    return { x: e.time, y: e.value };
+                    return {
+                        x: e.time,
+                        y: e.value,
+                        errorReason: e.errorReason,
+                    };
                 }),
             };
         });
-        console.log("Updating data with series ", newSeries);
         apexChart.updateSeries(newSeries);
     }
 
@@ -79,6 +107,7 @@
         trafficFlowSubscription = trafficFlowMeasurements.subscribe((data) => {
             trafficFlowData = data;
             updateData();
+            updateTitle();
             updateOverlay();
         });
 
@@ -95,9 +124,14 @@
     });
 </script>
 
-<div class="relative">
-    <div id="traffic-flow-chart"></div>
-    {#if showOverlay}
-        <Overlay text={overlayText} />
-    {/if}
+<div class="bg-white p-4 rounded shadow-lg">
+    <div class="flex flex-row justify-between mb-4">
+        <p class="font-semibold">{title}</p>
+    </div>
+    <div class="relative">
+        <div id="traffic-flow-chart"></div>
+        {#if showOverlay}
+            <Overlay text={overlayText} />
+        {/if}
+    </div>
 </div>

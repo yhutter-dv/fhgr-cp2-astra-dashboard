@@ -4,6 +4,7 @@ from defaults import *
 class DetectorMeasurement(BaseModel):
     id: str
     index: int
+    name: str | None = ""
 
 class DetectorMeasurementsBody(BaseModel):
     detectorMeasurements: list[DetectorMeasurement]

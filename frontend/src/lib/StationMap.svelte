@@ -145,4 +145,12 @@
     });
 </script>
 
-<div class="z-30" id="map" style="width: 100%; height: 100%;"></div>
+<div class="bg-white p-4 rounded shadow-lg">
+    <div class="flex flex-row justify-between mb-4">
+        <p class="font-semibold">Station Map</p>
+    </div>
+    <!-- Station Map (needs defined height, e.g h-96) -->
+    <div class="h-96">
+        <div class="z-30" id="map" style="width: 100%; height: 100%;"></div>
+    </div>
+</div>

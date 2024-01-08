@@ -52,4 +52,9 @@
     });
 </script>
 
-<div id="traffic-speed-chart"></div>
+<div class="bg-white p-4 rounded shadow-lg">
+    <div class="flex flex-row justify-between mb-4">
+        <p class="font-semibold">Traffic Speed</p>
+    </div>
+    <div id="traffic-speed-chart"></div>
+</div>
