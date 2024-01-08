@@ -4,7 +4,7 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte";
     import { CANTON_COLOR_MAP, SELECTED_COLOR } from "../utils/colors";
     import { ICON_MAP } from "../utils/icons";
-    import { stationsWithNumberOfErrorsPerCanton } from "../stores/dashboardStore";
+    import { stationsWithTotalNumberOfErrorsPerCanton } from "../stores/dashboardStore";
 
     const dispatch = createEventDispatcher();
 
@@ -15,7 +15,7 @@
     let selectedMarker = null;
     let selectedStation = null;
     let markerSelected = false;
-    let stationsWithNumberOfErrorsPerCantonSubscription = null;
+    let stationsWithTotalNumberOfErrorsPerCantonSubscription = null;
 
     function setupMap() {
         // Create map and attach id to element with id "mapid"
@@ -134,14 +134,17 @@
         leafletMap = map;
         leafletLayerControl = layerControl;
 
-        stationsWithNumberOfErrorsPerCantonSubscription =
-            stationsWithNumberOfErrorsPerCanton.subscribe((data) => {
-                recreateMarkers(data.stations, data.numberOfErrorsPerCanton);
+        stationsWithTotalNumberOfErrorsPerCantonSubscription =
+            stationsWithTotalNumberOfErrorsPerCanton.subscribe((data) => {
+                recreateMarkers(
+                    data.stations,
+                    data.totalNumberOfErrorsPerCanton,
+                );
             });
     });
 
     onDestroy(() => {
-        stationsWithNumberOfErrorsPerCantonSubscription();
+        stationsWithTotalNumberOfErrorsPerCantonSubscription();
     });
 </script>
 

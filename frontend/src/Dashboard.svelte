@@ -9,10 +9,11 @@
   import OverviewTrafficData from "./lib/OverviewTrafficData.svelte";
   import {
     trafficFlowMeasurements,
-    stationsWithNumberOfErrorsPerCanton,
+    stationsWithTotalNumberOfErrorsPerCanton,
     cantons,
     selectedStation,
     trafficSpeedMeasurements,
+    numberOfErrorsPerCantonMeasurements,
   } from "./stores/dashboardStore";
   import { get } from "svelte/store";
 
@@ -23,9 +24,10 @@
   onMount(async () => {
     const cantonsResult = await getCantons();
     cantons.set([...cantonsResult]);
-    stationsWithNumberOfErrorsPerCanton.set(
-      await getStationsWithNumberOfErrorsPerCanton(),
+    stationsWithTotalNumberOfErrorsPerCanton.set(
+      await getStationsWithTotalNumberOfErrorsPerCanton(),
     );
+    numberOfErrorsPerCantonMeasurements.set(await getNumberOfErrorsPerCanton());
   });
 
   function getDetectors(measurementType, station, vehicleType, direction) {
@@ -60,15 +62,21 @@
 
     // Clear measurement data...
     trafficFlowMeasurements.set([]);
+    trafficSpeedMeasurements.set([]);
+    numberOfErrorsPerCantonMeasurements.set([]);
 
-    stationsWithNumberOfErrorsPerCanton.set(
-      await getStationsWithNumberOfErrorsPerCanton(),
+    stationsWithTotalNumberOfErrorsPerCanton.set(
+      await getStationsWithTotalNumberOfErrorsPerCanton(),
     );
+
+    numberOfErrorsPerCantonMeasurements.set(await getNumberOfErrorsPerCanton());
 
     // Only try get data if a station is selected.
     const station = get(selectedStation);
     if (station === null) {
-      console.warn("No stations is selected, will no try getting data...");
+      console.warn(
+        "No stations is selected, will no try getting traffic flow and speed data...",
+      );
       return;
     }
     const trafficFlowDetectors = getDetectors(
@@ -116,12 +124,13 @@
     return result;
   }
 
-  async function getStationsWithNumberOfErrorsPerCanton() {
+  async function getStationsWithTotalNumberOfErrorsPerCanton() {
     const stations = await getStations();
-    const numberOfErrorsPerCanton = await getNumberOfErrorsForCantons();
+    const totalNumberOfErrorsPerCanton =
+      await getTotalNumberOfErrorsForCantons();
     const result = {
       stations: stations,
-      numberOfErrorsPerCanton: numberOfErrorsPerCanton,
+      totalNumberOfErrorsPerCanton: totalNumberOfErrorsPerCanton,
     };
     return result;
   }
@@ -142,12 +151,33 @@
     return result;
   }
 
-  async function getNumberOfErrorsForCantons() {
+  async function getTotalNumberOfErrorsForCantons() {
     const body = {
       canton: filterSettings.canton,
       time: filterSettings.timeRange,
     };
-    const response = await fetch(`${API_BASE_URL}/cantons/numberOfErrors`, {
+    const response = await fetch(
+      `${API_BASE_URL}/cantons/total_number_of_errors`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      },
+    );
+    const result = await response.json();
+    return result;
+  }
+
+  async function getNumberOfErrorsPerCanton() {
+    // TODO: Find out good bin size for each Time Range
+    const body = {
+      canton: filterSettings.canton,
+      time: filterSettings.timeRange,
+      binSize: "5s",
+    };
+    const response = await fetch(`${API_BASE_URL}/cantons/number_of_errors`, {
       method: "POST",
       body: JSON.stringify(body),
       headers: {

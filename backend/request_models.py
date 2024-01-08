@@ -14,6 +14,11 @@ class StationsBody(BaseModel):
     canton: str | None = "" # Optional
     time: str | None = DEFAULT_TIME_RANGE # Optional
 
+class CantonTotalNumberOfErrorsBody(BaseModel):
+    canton: str | None = ""  # Optional
+    time: str | None = DEFAULT_TIME_RANGE # Optional
+
 class CantonNumberOfErrorsBody(BaseModel):
     canton: str | None = ""  # Optional
+    binSize: str
     time: str | None = DEFAULT_TIME_RANGE # Optional

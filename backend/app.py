@@ -138,9 +138,6 @@ CANTONS = [{
 
 CANTONS += [{"label": canton_name, "value": canton_name} for canton_name in CANTON_NAMES]
 
-
-print("Cantons are ", CANTONS)
-
 app = create_app()
 db_client = connect_to_db()
 
@@ -266,13 +263,13 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
 async def get_cantons():
     return CANTONS
 
-@app.post("/cantons/numberOfErrors")
-async def get_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfErrorsBody):
+@app.post("/cantons/total_number_of_errors")
+async def post_cantons_total_number_of_errors(cantonTotalNumberOfErrorsBody: CantonTotalNumberOfErrorsBody):
     try:
         api = db_client.query_api()
-        has_canton = cantonNumberOfErrorsBody.canton != None and cantonNumberOfErrorsBody.canton != ""
-        canton = cantonNumberOfErrorsBody.canton
-        time_str = get_value_or_default(cantonNumberOfErrorsBody.time, DEFAULT_TIME_RANGE)
+        has_canton = cantonTotalNumberOfErrorsBody.canton != None and cantonTotalNumberOfErrorsBody.canton != ""
+        canton = cantonTotalNumberOfErrorsBody.canton
+        time_str = get_value_or_default(cantonTotalNumberOfErrorsBody.time, DEFAULT_TIME_RANGE)
 
         query = ""
         if has_canton:
@@ -308,12 +305,80 @@ async def get_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfE
             cantons_number_of_errors.append(canton_number_of_errors)
         return cantons_number_of_errors
     except Exception as error:
+        print(f"Failed to get total number of errors per canton because {error}")
+        return []
+
+
+@app.post("/cantons/number_of_errors")
+async def post_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOfErrorsBody):
+    try:
+        api = db_client.query_api()
+        has_canton = cantonNumberOfErrorsBody.canton != None and cantonNumberOfErrorsBody.canton != ""
+        canton = cantonNumberOfErrorsBody.canton.strip()
+        time_str = get_value_or_default(cantonNumberOfErrorsBody.time, DEFAULT_TIME_RANGE)
+        bin_size  = cantonNumberOfErrorsBody.binSize
+
+        query = ""
+        if not has_canton:
+            return []
+        
+        if canton == ALL_CANTONS:
+            query = """
+            from(bucket: "fhgr-cp2-bucket")
+                |> range(start: %time%)
+                |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                |> filter(fn: (r) => r["hasError"] == "True")
+                |> window(every: %bin_size%)
+                |> count()
+                |> group(columns: ["_time", "canton"])
+                |> duplicate(column: "_stop", as: "_time")
+                |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+            """
+        else:
+            # Specific canton specified
+            query = """
+                 from(bucket: "fhgr-cp2-bucket")
+                    |> range(start: %time%)
+                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
+                    |> filter(fn: (r) => r["hasError"] == "True")
+                    |> filter(fn: (r) => r["canton"] == "%canton%")
+                    |> window(every: %bin_size%)
+                    |> count()
+                    |> group(columns: ["_time", "canton"])
+                    |> duplicate(column: "_stop", as: "_time")
+                    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+            """
+            query = query.replace("%canton%", canton)
+
+        query = query.replace("%time%", time_str).replace("%bin_size%", bin_size)
+        print(f"Sending the following query {query}")
+        cantons_number_of_errors = []
+        tables = api.query(query)
+        
+        # We get a table result because we window by the bin size
+        for table in tables:
+            # We can get the canton from any of the records as it is ensure that all records in the same
+            # Table do have the same canton (because we grouped by it)
+            canton_result = {
+                "name": table.records[0]["canton"]
+            }
+            measurements = []
+            for record in table.records:
+                measurement = {
+                    "numberOfErrors": record["value"],
+                    "time": record["_time"]
+                }
+                measurements.append(measurement)
+            
+            canton_result["measurements"] = measurements
+            cantons_number_of_errors.append(canton_result)
+        return cantons_number_of_errors
+    except Exception as error:
         print(f"Failed to get number of errors per canton because {error}")
         return []
 
 
-
-
+'''
 @app.post("/station/numberOfErrors")
 async def get_station_number_of_errors(stationNumberOfErrorsBody: CantonNumberOfErrorsBody):
     try:
@@ -476,3 +541,4 @@ async def get_station_trafficSpeed(stationTrafficSpeedBody: CantonNumberOfErrors
     except Exception as error:
         print(f"Failed to get traffic speed per station because {error}")
         return []
+'''
