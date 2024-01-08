@@ -12,6 +12,7 @@
     stationsWithNumberOfErrorsPerCanton,
     cantons,
     selectedStation,
+    trafficSpeedMeasurements,
   } from "./stores/dashboardStore";
   import { get } from "svelte/store";
 
@@ -70,16 +71,23 @@
       console.warn("No stations is selected, will no try getting data...");
       return;
     }
-    const trafficFlowDetectorsWithIndices = getDetectors(
+    const trafficFlowDetectors = getDetectors(
       "trafficFlow",
       station,
       filterSettings.vehicleType,
       filterSettings.direction,
     );
-    const trafficFlow = await getDetectorMeasurements(
-      trafficFlowDetectorsWithIndices,
-    );
+    const trafficFlow = await getDetectorMeasurements(trafficFlowDetectors);
     trafficFlowMeasurements.set(trafficFlow);
+
+    const trafficSpeedDetectors = getDetectors(
+      "trafficSpeed",
+      station,
+      filterSettings.vehicleType,
+      filterSettings.direction,
+    );
+    const trafficSpeed = await getDetectorMeasurements(trafficSpeedDetectors);
+    trafficSpeedMeasurements.set(trafficSpeed);
   }
 
   function selectedStationChanged(station) {
@@ -165,9 +173,9 @@
 
       <TrafficFlow />
 
-      <TrafficSpeed />
-
       <OverviewTrafficData />
+
+      <TrafficSpeed />
     </div>
   </div>
 </main>
