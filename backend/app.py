@@ -250,7 +250,7 @@ ENV_FILE_PATH = "./.env-local"
 WRITE_OPTIONS = SYNCHRONOUS
 
 BUCKET = "fhgr-cp2-bucket"
-UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS = '*/60' # CRON Job notation, e.g every 1 Minute
+UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_MINUTES = '*/1  ' # CRON Job notation, e.g every 1 Minute
 SECRETS = load_secrets()
 MST = read_mst_from_file()
 MSR_PAYLOAD, TOKEN = load_msr_payload_and_token()
@@ -272,8 +272,8 @@ db_client = connect_to_db()
 @app.on_event("startup")
 def on_startup():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(update_detector_measurements_in_db, 'cron', second=UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS)
-    scheduler.start()
+    scheduler.add_job(update_detector_measurements_in_db, 'cron', minute=UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_MINUTES)
+    # scheduler.start()
 
 @app.on_event("shutdown")
 def on_shutdown():
