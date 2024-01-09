@@ -1,7 +1,10 @@
 <script>
   import { onMount } from "svelte";
   import StationMap from "./lib/StationMap.svelte";
-  import { DEFAULT_FILTER_SETTINGS } from "./utils/filterValues";
+  import {
+    DEFAULT_FILTER_SETTINGS,
+    getBinSizeForTimeRangeValue,
+  } from "./utils/filterValues";
   import Header from "./lib/Header.svelte";
   import FilterSidebar from "./lib/FilterSidebar.svelte";
   import TrafficFlow from "./lib/TrafficFlow.svelte";
@@ -175,7 +178,7 @@
     const body = {
       canton: filterSettings.canton,
       time: filterSettings.timeRange,
-      binSize: "5s",
+      binSize: getBinSizeForTimeRangeValue(filterSettings.timeRange),
     };
     const response = await fetch(`${API_BASE_URL}/cantons/number_of_errors`, {
       method: "POST",

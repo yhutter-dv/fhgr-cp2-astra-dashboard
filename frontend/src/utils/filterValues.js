@@ -1,25 +1,32 @@
 const TIME_RANGES = [
     {
-        label: "Last 4 hours",
-        value: "-4h"
+        label: "Last 10 Minutes",
+        value: "-10m",
+        binSize: "1m"
     },
     {
-        label: "Last 8 hours",
-        value: "-8h"
+        label: "Last Hour",
+        value: "-1h",
+        binSize: "10m"
+    },
+    {
+        label: "Last 4 Hours",
+        value: "-4h",
+        binSize: "30m"
     },
     {
         label: "Last Day",
-        value: "-1d"
+        value: "-24h",
+        binSize: "1h"
     },
     {
         label: "Last Week",
-        value: "-7d"
-    },
-    {
-        label: "Last Month",
-        value: "-30d"
+        value: "-7d",
+        binSize: "1d"
     }
 ];
+
+const DEFAULT_BIN_SIZE = "1m";
 
 const DIRECTIONS = [
     {
@@ -65,6 +72,15 @@ export const FILTER_VALUE_MAP = {
         "values": VEHICLE_TYPES,
         "default": VEHICLE_TYPES[0].value
     }
+}
+
+export function getBinSizeForTimeRangeValue(timeRangeValue) {
+    const index = TIME_RANGES.findIndex(t => t.value === timeRangeValue);
+    if (index < 0) {
+        console.warn(`Did not find corresponding Time Range for value ${timeRangeValue}, default bin size will be returned`);
+        return DEFAULT_BIN_SIZE;
+    }
+    return TIME_RANGES[index].binSize;
 }
 
 export const DEFAULT_FILTER_SETTINGS = {
