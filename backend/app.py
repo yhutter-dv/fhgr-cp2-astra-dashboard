@@ -8,6 +8,9 @@ from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 # Schedule
 from apscheduler.schedulers.background import BackgroundScheduler
+import requests
+# etree for fast xml parsing
+from lxml import etree as etree_lxml
 
 import os
 import json
@@ -26,12 +29,130 @@ def read_mst_from_file():
         mst = json.load(f)
     return mst
 
+def detector_id_to_station_id(detector_id):
+    # Dectector Id: CH:0002.01
+    # Station Id: CH:0002
+    return detector_id.split(".")[0]
 
-def read_msr_from_file():
-    ensure_file(MSR_FILE_PATH)
-    with open(MSR_FILE_PATH, "r") as f:
-        msr = json.load(f)
-    return msr
+def parse_msr(xml_content):
+    tree = etree_lxml.fromstring(xml_content)
+    ns = {
+        "dx223": "http://datex2.eu/schema/2/2_0",
+        "xsi": "http://www.w3.org/2001/XMLSchema-instance"
+    }
+
+    site_measurement_nodes = tree.xpath(
+        './/dx223:siteMeasurements',
+        namespaces=ns)
+
+    result = dict()
+    detector_measurements = []
+    for node in site_measurement_nodes:
+        current_detector_measurement = {}
+        current_sensor_measurements = []
+
+        id_node = node.xpath(
+            './/dx223:measurementSiteReference[@id]', namespaces=ns)[0]
+
+        time_node = node.xpath(
+            './/dx223:measurementTimeDefault', namespaces=ns)[0]
+
+        measured_value_nodes = node.xpath(
+            './/dx223:measuredValue[@index]', namespaces=ns)
+
+        for measured_value_node in measured_value_nodes:
+            index = int(measured_value_node.attrib["index"])
+            current_sensor_measurement = {}
+            measurement_kind = measured_value_node.xpath(
+                './/dx223:basicData/@xsi:type', namespaces=ns)[0]
+
+            has_data_error_nodes = measured_value_node.xpath(
+                './/dx223:basicData//dx223:dataError', namespaces=ns)
+
+            measured_value = 0
+            error_reason = None
+            kind = None
+            has_data_error = len(has_data_error_nodes) > 0
+            if has_data_error:
+                error_reason_node = measured_value_node.xpath(
+                    './/dx223:basicData//dx223:reasonForDataError//dx223:value', namespaces=ns)[0]
+                error_reason = error_reason_node.text
+            else:
+                if measurement_kind == "dx223:TrafficFlow":
+                    kind = "trafficFlow"
+                    value_node = measured_value_node.xpath(
+                        './/dx223:basicData//dx223:vehicleFlowRate', namespaces=ns)[0]
+                    measured_value = float(value_node.text)
+                elif measurement_kind == "dx223:TrafficSpeed":
+                    kind = "trafficSpeed"
+                    number_of_input_values_node = measured_value_node.xpath(
+                        './/dx223:basicData//dx223:averageVehicleSpeed[@numberOfInputValuesUsed]', namespaces=ns)[0]
+
+                    number_of_input_values_used = number_of_input_values_node.attrib[
+                        "numberOfInputValuesUsed"]
+                    value_node = measured_value_node.xpath(
+                        './/dx223:basicData//dx223:speed', namespaces=ns)[0]
+                    measured_value = float(value_node.text)
+                    current_sensor_measurement["numberOfInputValuesUsed"] = int(
+                        number_of_input_values_used)
+
+            current_sensor_measurement["value"] = measured_value
+            current_sensor_measurement["hasError"] = has_data_error
+            current_sensor_measurement["errorReason"] = error_reason
+            current_sensor_measurement["index"] = index
+            current_sensor_measurement["kind"] = kind
+
+            current_sensor_measurements.append(current_sensor_measurement)
+
+        detector_id = id_node.attrib["id"]
+        current_detector_measurement["id"] = detector_id
+        current_detector_measurement["time"] = time_node.text
+        current_detector_measurement["sensorMeasurements"] = current_sensor_measurements
+        current_detector_measurement["canton"] = DETECTOR_ID_TO_CANTON_MAPPING.get(detector_id, None)
+        current_detector_measurement["stationId"] = detector_id_to_station_id(detector_id)
+
+        detector_measurements.append(current_detector_measurement)
+
+    result["detector_measurements"] = detector_measurements
+    return result
+
+def load_detector_id_to_canton_mapping():
+    ensure_file(MST_FILE_PATH)
+    detector_id_canton_mapping = {}
+    with open(MST_FILE_PATH, "r") as f:
+        stations = json.load(f)
+    for station in stations:
+        for detector in station["detectors"]:
+            detector_id = detector["id"]
+            canton = station["canton"]
+            detector_id_canton_mapping[detector_id] = canton
+    return detector_id_canton_mapping
+
+def parse_msr_from_request():
+    url = "https://api.opentransportdata.swiss/TDP/Soap_Datex2/Pull"
+
+    headers = {
+        'Content-Type': 'text/xml; charset=utf-8',
+        "Authorization": TOKEN,
+        "SOAPAction": "http://opentransportdata.swiss/TDP/Soap_Datex2/Pull/v1/pullMeasuredData"
+    }
+    response = requests.request("POST", url, headers=headers, data=MSR_PAYLOAD)
+    result = parse_msr(response.text.encode())
+    return result
+
+def load_msr_payload_and_token():
+    token = SECRETS.get("OPEN_TRANSPORT_DATA_AUTH_TOKEN", "")
+    if token == "":
+        print("No token found, are you sure you created a '.env' file and specified a value for 'OPEN_TRANSPORT_DATA_AUTH_TOKEN'?")
+        return
+
+    ensure_file(PAYLOAD_MSR_FILE_PATH)
+
+    payload = ""
+    with open(PAYLOAD_MSR_FILE_PATH, "r",) as f:
+        payload = f.read()
+
+    return (payload, token)
 
 def create_app():
     app = FastAPI()
@@ -98,9 +219,11 @@ def write_detector_measurements_from_msr(msr):
         print(f"Failed to write MSR data because {error}")
 
 def update_detector_measurements_in_db():
-    # TODO: Read via webrequest instead of static file...
-    msr = read_msr_from_file()
-    write_detector_measurements_from_msr(msr)
+    try:
+        msr = parse_msr_from_request()
+        write_detector_measurements_from_msr(msr)
+    except Exception as error:
+        print(f"Failed to get latest msr data because of {error}")
 
 def create_query_from_template(template, placeholder, elements, operator):
         query = ""
@@ -120,14 +243,19 @@ def get_value_or_default(value, default):
 # Global variables
 MSR_FILE_PATH = "./data/msr.json"
 MST_FILE_PATH = "./data/mst.json"
+PAYLOAD_MSR_FILE_PATH = "./data/payload_pull_msr.xml"
+
 
 ENV_FILE_PATH = "./.env-local"
 WRITE_OPTIONS = SYNCHRONOUS
 
 BUCKET = "fhgr-cp2-bucket"
-UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS = '*/5' # CRON Job notation, e.g every 5 seconds
+UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS = '*/60' # CRON Job notation, e.g every 1 Minute
 SECRETS = load_secrets()
 MST = read_mst_from_file()
+MSR_PAYLOAD, TOKEN = load_msr_payload_and_token()
+# Load the mapping so we know which detector id is mapped to which canton
+DETECTOR_ID_TO_CANTON_MAPPING = load_detector_id_to_canton_mapping()
 
 ALL_CANTONS = "all"
 CANTON_NAMES = list(set([station["canton"] for station in MST]))
@@ -145,7 +273,7 @@ db_client = connect_to_db()
 def on_startup():
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_detector_measurements_in_db, 'cron', second=UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_SECONDS)
-    # scheduler.start()
+    scheduler.start()
 
 @app.on_event("shutdown")
 def on_shutdown():
@@ -376,169 +504,3 @@ async def post_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOf
     except Exception as error:
         print(f"Failed to get number of errors per canton because {error}")
         return []
-
-
-'''
-@app.post("/station/numberOfErrors")
-async def get_station_number_of_errors(stationNumberOfErrorsBody: CantonNumberOfErrorsBody):
-    try:
-        api = db_client.query_api()
-        has_canton = stationNumberOfErrorsBody.canton != None and stationNumberOfErrorsBody.canton != ""
-        canton = stationNumberOfErrorsBody.canton
-        time_str = get_value_or_default(stationNumberOfErrorsBody.time, DEFAULT_TIME_RANGE)
-
-        query = ""
-        if has_canton:
-            # one canton specified, group by station
-            query = """
-                from(bucket: "fhgr-cp2-bucket")
-                    |> range(start: %time%)
-                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
-                    |> filter(fn: (r) => r["hasError"] == "True")
-                    |> filter(fn: (r) => r["canton"] == "%canton%")
-                    |> group(columns: ["stationId"])
-                    |> count()
-            """
-            query = query.replace("%canton%", canton)
-        else:
-            # No canton specified, group by canton
-            query = """
-                from(bucket: "fhgr-cp2-bucket")
-                    |> range(start: %time%)
-                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
-                    |> filter(fn: (r) => r["hasError"] == "True")
-                    |> group(columns: ["canton"])
-                    |> count()
-            """
-        query = query.replace("%time%", time_str)
-        print(f"Sending the following query {query}")
-        stations_number_of_errors = []
-        records = api.query_stream(query)
-        for record in records:
-            if has_canton:
-                station_number_of_errors = {
-                    "stationId": record["stationId"],
-                    "numberOfErrors": record["_value"],
-                }
-                stations_number_of_errors.append(station_number_of_errors)
-            else:
-                station_number_of_errors = {
-                    "canton": record["canton"],
-                    "numberOfErrors": record["_value"],
-                }
-                stations_number_of_errors.append(station_number_of_errors)
-        return stations_number_of_errors
-    except Exception as error:
-        print(f"Failed to get number of errors per station because {error}")
-        return []
-
-@app.post("/station/trafficFlow")
-async def get_station_trafficFlow(stationTrafficFlowBody: CantonNumberOfErrorsBody):
-    try:
-        api = db_client.query_api()
-        has_canton = stationTrafficFlowBody.canton != None and stationTrafficFlowBody.canton != ""
-        canton = stationTrafficFlowBody.canton
-        time_str = get_value_or_default(stationTrafficFlowBody.time, DEFAULT_TIME_RANGE)
-
-        query = ""
-        if has_canton:
-            # one canton specified, group by station and show mean
-            query = """
-                from(bucket: "fhgr-cp2-bucket")
-                    |> range(start: %time%)
-                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
-                    |> filter(fn: (r) => r["kind"] == "trafficFlow")
-                    |> filter(fn: (r) => r["_field"] == "value")
-                    |> filter(fn: (r) => r["canton"] == "%canton%")
-                    |> group(columns: ["stationId"])
-                    |> mean()
-            """
-            query = query.replace("%canton%", canton)
-        else:
-            # No canton specified, group by canton and show mean
-            query = """
-                from(bucket: "fhgr-cp2-bucket")
-                    |> range(start: %time%)
-                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
-                    |> filter(fn: (r) => r["kind"] == "trafficFlow")
-                    |> filter(fn: (r) => r["_field"] == "value")
-                    |> group(columns: ["canton"])
-                    |> mean()
-            """
-        query = query.replace("%time%", time_str)
-        print(f"Sending the following query {query}")
-        stations_trafficFlows = []
-        records = api.query_stream(query)
-        for record in records:
-            if has_canton:
-                station_trafficFlow = {
-                    "stationId": record["stationId"],
-                    "trafficFlow(mean)": record["_value"],
-                }
-                stations_trafficFlows.append(station_trafficFlow)
-            else:
-                station_trafficFlow = {
-                    "canton": record["canton"],
-                    "trafficFlow(mean)": record["_value"],
-                }
-                stations_trafficFlows.append(station_trafficFlow)
-        return stations_trafficFlows
-    except Exception as error:
-        print(f"Failed to get traffic flow per station because {error}")
-        return []
-
-@app.post("/station/trafficSpeed")
-async def get_station_trafficSpeed(stationTrafficSpeedBody: CantonNumberOfErrorsBody):
-    try:
-        api = db_client.query_api()
-        has_canton = stationTrafficSpeedBody.canton != None and stationTrafficSpeedBody.canton != ""
-        canton = stationTrafficSpeedBody.canton
-        time_str = get_value_or_default(stationTrafficSpeedBody.time, DEFAULT_TIME_RANGE)
-
-        query = ""
-        if has_canton:
-            # one canton specified, group by station and show mean
-            query = """
-                from(bucket: "fhgr-cp2-bucket")
-                    |> range(start: %time%)
-                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
-                    |> filter(fn: (r) => r["kind"] == "trafficSpeed")
-                    |> filter(fn: (r) => r["_field"] == "value")
-                    |> filter(fn: (r) => r["canton"] == "%canton%")
-                    |> group(columns: ["stationId"])
-                    |> mean()
-            """
-            query = query.replace("%canton%", canton)
-        else:
-            # No canton specified, group by canton and show mean
-            query = """
-                from(bucket: "fhgr-cp2-bucket")
-                    |> range(start: %time%)
-                    |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
-                    |> filter(fn: (r) => r["kind"] == "trafficSpeed")
-                    |> filter(fn: (r) => r["_field"] == "value")
-                    |> group(columns: ["canton"])
-                    |> mean()
-            """
-        query = query.replace("%time%", time_str)
-        print(f"Sending the following query {query}")
-        stations_trafficSpeeds = []
-        records = api.query_stream(query)
-        for record in records:
-            if has_canton:
-                station_trafficSpeed = {
-                    "stationId": record["stationId"],
-                    "trafficSpeed(mean)": record["_value"],
-                }
-                stations_trafficSpeeds.append(station_trafficSpeed)
-            else:
-                station_trafficSpeed = {
-                    "canton": record["canton"],
-                    "trafficSpeed(mean)": record["_value"],
-                }
-                stations_trafficSpeeds.append(station_trafficSpeed)
-        return stations_trafficSpeeds
-    except Exception as error:
-        print(f"Failed to get traffic speed per station because {error}")
-        return []
-'''
