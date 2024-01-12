@@ -3,6 +3,7 @@
     <h2>Realtime Data Dashboard with ASTRA Dataset for Consultancy Project 2</h2>
     <br/>
     <br/>
+    <img src="./images/screenshot.png" alt="Screenshot"/>
 </div>
 
 ## Clone the Repo
@@ -25,8 +26,9 @@ chmod +x *.sh
 | Script                    | Purpose                                                                                                                                                                                                   |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | run_influxdb.sh           | Starts and runs the InfluxDB Docker Container                                                                                                                                                             |
+| stop_influxdb.sh          | Stops the InfluxDB Container.                                                                                                                                                                             |
 | run_docker.sh             | Starts all necessary Docker Containers                                                                                                                                                                    |
-| clean_influxdb_storage.sh | Clean the entire influxdb storage                                                                                                                                                                         |
+| clean_influxdb_storage.sh | Clean the entire influxdb storage. Please note that for this to work the InfluxDB Container has to be stopped with the `stop_influxdb.sh` script.                                                         |
 | /backend/preprocessing.py | Automatically parses a SOAP Request from [Open-Data-Plattform Mobilität Schweiz](https://opentransportdata.swiss/de/strassenverkehr/) and write the result as a `.json` file for MST as well as MSR data. |
 
 ## :pencil2: Setup for Local Development
@@ -171,6 +173,11 @@ Note that this project still has some rough edges noteably:
       choosen depending on the passed time range. Meaning if a time range of 1
       month is specified the data could get retrieved from the "one month
       bucket"
+- [ ] Implement actually Live Mode for the Dashboard. This could be achieved by
+      implementing a `WebSocket` connection on the FastAPI Backend. This way the
+      frontend would not need to constantly polling the data (e.g the backend
+      notifies the frontend when the data is available through a WebSocket
+      message.)
 
 ## Used Ressources
 

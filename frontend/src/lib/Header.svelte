@@ -17,15 +17,4 @@
         </svg>
         <div class="text-2xl ml-1 font-bold">Astra Dashboard</div>
     </div>
-    <div class="flex flex-row justify-end items-center">
-        <input
-            id="toggle-live-mode"
-            class="rounded"
-            type="checkbox"
-            name="Enable Live Mode"
-        />
-        <label class="ml-2 text-sm font-light" for="toggle-live-mode"
-            >Toggle Live Mode</label
-        >
-    </div>
 </div>
