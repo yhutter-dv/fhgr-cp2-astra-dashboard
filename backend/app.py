@@ -249,9 +249,10 @@ PAYLOAD_MSR_FILE_PATH = "./data/payload_pull_msr.xml"
 ENV_FILE_PATH = "./.env-local"
 WRITE_OPTIONS = SYNCHRONOUS
 
-BUCKET = "fhgr-cp2-bucket"
 UPDATE_DETECTOR_MEASUREMENTS_IN_DB_INTERVAL_MINUTES = '*/1  ' # CRON Job notation, e.g every 1 Minute
 SECRETS = load_secrets()
+BUCKET = SECRETS["DOCKER_INFLUXDB_INIT_BUCKET"]
+
 MST = read_mst_from_file()
 MSR_PAYLOAD, TOKEN = load_msr_payload_and_token()
 # Load the mapping so we know which detector id is mapped to which canton
@@ -301,7 +302,7 @@ async def post_stations(stationsBody: StationsBody):
         query = ""
         if ALL_CANTONS:
             query = """
-                from(bucket: "fhgr-cp2-bucket")
+                from(bucket: "%bucket%")
                     |> range(start: %time%)
                     |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
                     |> filter(fn: (r) => r["hasError"] == "True")
@@ -313,14 +314,14 @@ async def post_stations(stationsBody: StationsBody):
         else:
             # No canton specified
             query = """
-                from(bucket: "fhgr-cp2-bucket")
+                from(bucket: "%bucket%")
                     |> range(start: %time%)
                     |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
                     |> filter(fn: (r) => r["hasError"] == "True")
                     |> group(columns: ["stationId"])
                     |> count()
             """
-        query = query.replace("%time%", time_str)
+        query = query.replace("%time%", time_str).replace("%bucket%", BUCKET)
         print(f"Sending the following query {query}")
         records = api.query_stream(query)
 
@@ -355,14 +356,14 @@ async def post_detector_measurements(detectorMeasurementsBody: DetectorMeasureme
             name = detector_measurement.name
             index = detector_measurement.index
             query = """
-                from(bucket: "fhgr-cp2-bucket")
+                from(bucket: "%bucket%")
                   |> range(start: %time%)
                   |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
                   |> filter(fn: (r) => r["index"] == "%index%")
                   |> filter(fn: (r) => r["id"] == "%id%")
                   |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             """
-            query = query.replace("%time%", time_str).replace("%index%", str(index)).replace("%id%", id)
+            query = query.replace("%time%", time_str).replace("%index%", str(index)).replace("%id%", id).replace("%bucket%", BUCKET)
             print(f"Sending the following query {query}")
             records = api.query_stream(query)
             measurements = []
@@ -402,7 +403,7 @@ async def post_cantons_total_number_of_errors(cantonTotalNumberOfErrorsBody: Can
         query = ""
         if has_canton:
             query = """
-                from(bucket: "fhgr-cp2-bucket")
+                from(bucket: "%bucket%")
                     |> range(start: %time%)
                     |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
                     |> filter(fn: (r) => r["hasError"] == "True")
@@ -414,14 +415,14 @@ async def post_cantons_total_number_of_errors(cantonTotalNumberOfErrorsBody: Can
         else:
             # No canton specified
             query = """
-                from(bucket: "fhgr-cp2-bucket")
+                from(bucket: "%bucket%")
                     |> range(start: %time%)
                     |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
                     |> filter(fn: (r) => r["hasError"] == "True")
                     |> group(columns: ["canton"])
                     |> count()
             """
-        query = query.replace("%time%", time_str)
+        query = query.replace("%time%", time_str).replace("%bucket%", BUCKET)
         print(f"Sending the following query {query}")
         cantons_number_of_errors = []
         records = api.query_stream(query)
@@ -452,7 +453,7 @@ async def post_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOf
         
         if canton == ALL_CANTONS:
             query = """
-            from(bucket: "fhgr-cp2-bucket")
+            from(bucket: "%bucket%")
                 |> range(start: %time%)
                 |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
                 |> filter(fn: (r) => r["hasError"] == "True")
@@ -465,7 +466,7 @@ async def post_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOf
         else:
             # Specific canton specified
             query = """
-                 from(bucket: "fhgr-cp2-bucket")
+                 from(bucket: "%bucket%")
                     |> range(start: %time%)
                     |> filter(fn: (r) => r["_measurement"] == "detector_measurement")
                     |> filter(fn: (r) => r["hasError"] == "True")
@@ -478,7 +479,7 @@ async def post_cantons_number_of_errors(cantonNumberOfErrorsBody: CantonNumberOf
             """
             query = query.replace("%canton%", canton)
 
-        query = query.replace("%time%", time_str).replace("%bin_size%", bin_size)
+        query = query.replace("%time%", time_str).replace("%bin_size%", bin_size).replace("%bucket%", BUCKET)
         print(f"Sending the following query {query}")
         cantons_number_of_errors = []
         tables = api.query(query)

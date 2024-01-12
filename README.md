@@ -13,12 +13,7 @@ First of all clone this repository to a local destination of your choice
 git clone https://github.com/yhutter-dv/fhgr-cp2-astra-dashboard.git ~/GitRepos/fhgr-cp2-astra-dashboard
 ```
 
-## Fill out the .env file
-
-In order for the Docker Container to work properly you need to fill out the
-`.env` file in the `backend directory`.
-
-## Scripts
+## Scripts and Helper Files
 
 In order to streamline some things we have created scripts. In order to use them
 make sure they are executable, e.g
@@ -27,11 +22,12 @@ make sure they are executable, e.g
 chmod +x *.sh
 ```
 
-| Script                    | Purpose                                       |
-| ------------------------- | --------------------------------------------- |
-| run_influxdb.sh           | Starts and runs the InfluxDB Docker Container |
-| run_docker.sh             | Starts all necessary Docker Containers        |
-| clean_influxdb_storage.sh | Clean the entire influxdb storage             |
+| Script                    | Purpose                                                                                                                                                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| run_influxdb.sh           | Starts and runs the InfluxDB Docker Container                                                                                                                                                             |
+| run_docker.sh             | Starts all necessary Docker Containers                                                                                                                                                                    |
+| clean_influxdb_storage.sh | Clean the entire influxdb storage                                                                                                                                                                         |
+| /backend/preprocessing.py | Automatically parses a SOAP Request from [Open-Data-Plattform Mobilität Schweiz](https://opentransportdata.swiss/de/strassenverkehr/) and write the result as a `.json` file for MST as well as MSR data. |
 
 ## :pencil2: Setup for Local Development
 
@@ -40,14 +36,10 @@ chmod +x *.sh
 
 ### Influx DB
 
-You can run Influx DB locally via Docker. For this simply execute the following
-command or use the script `run_influxdb.sh`:
-
-```bash
-sudo docker compose up -d influxdb
-```
-
-InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
+You can run Influx DB locally via Docker. Please make sure you have docker
+installed and it is actually running. After that you can start Influx DB by
+executing the `run_influxdb.sh` script. InfluxDB should be available under this
+[URL](http://127.0.0.1:8086/).
 
 ### FastAPI
 
@@ -59,28 +51,68 @@ cd backend
 python -m venv ./.venv
 source ./.venv/bin/active.sh
 pip install -r ./requirements.txt
-uvicorn app:app --reload
 ```
 
-FastAPI should be available under this [URL](http://127.0.0.1:8000/docs).
+#### Fill out the .env file
 
-> Be aware that the response contains about 2MB of JSON so trying it out inside
-> Swagger may cause your browser to hang.
+In order for the Backend to work properly you need to fill out the `.env` file
+in the `backend directory`.
+
+```bash
+OPEN_TRANSPORT_DATA_AUTH_TOKEN=<YOUR-SECRET-TOKEN>
+DOCKER_INFLUXDB_INIT_MODE=setup
+DOCKER_INFLUXDB_INIT_USERNAME=fhgr-cp2
+DOCKER_INFLUXDB_INIT_PASSWORD=fhgr-cp2
+DOCKER_INFLUXDB_INIT_ORG=fhgr-cp2-org
+DOCKER_INFLUXDB_INIT_BUCKET=fhgr-cp2-bucket
+DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=FWriHqU2mWlfCVuVWPjpC93UqGxVp_fNSH8eDoslH6t7NM7E_e93WChUoq2ypKaJe-xARNQGOrbHVCU7kiuJVg==
+INFLUXDB_URL=http://127.0.0.1:8086
+```
+
+> :warning: Please do NOT check in the `.env` file with secret credentials
+
+The last thing you would need to do is give the correct path to your configured
+.env file inside the `app.py` file:
+
+```python
+...
+ENV_FILE_PATH = "./.env"
+...
+```
+
+#### Start FastAPI
+
+In order to start FastAPI simply execute the following command
+
+```bash
+uvicorn app:app --port 6969 --reload
+```
+
+> Please note that you can enter any port number you want. Just make sure it
+> matches with the one entered in the `.env` file under the frontend directory
+> (see explanation below).
+
+FastAPI should be available under this [URL](http://127.0.0.1:6969/docs).
+
+> :warning: Be aware that the response of some endpoints like `stations`
+> contains about 2MB of JSON so trying it out inside Swagger may cause your
+> browser to hang.
 
 ### Frontend
 
-The Frontend is written in React (TypeScript) with some dependencies like
-[React Map GL](https://visgl.github.io/react-map-gl/) and
-[Apex Charts](https://apexcharts.com/). First make sure that
+The Frontend is written in Svelte (JavaScript) with some dependencies like
+`Leaflet` and `ApexCharts`. First make sure that
 [NodeJS](https://nodejs.org/en/) is installed. If possible choose the
 **Current** Version.
 
-Also for the Map to work a
-[MapBox Token](https://docs.mapbox.com/help/getting-started/access-tokens/) is
-required. Once you have that you must add it to the `.env` in the frontend
-diretory along with the URL of the FastAPI.
+Please also add the API Url of the FastAPI Backend to the .env file (under the
+`frontend` directory):
 
-> :warning: Please do NOT check in the `.env` file with your Secrets.
+```bash
+VITE_API_URL=YOUR_API_URL
+```
+
+> :warning: Please do NOT check in the `.env` file with secret credentials
 
 After that simply install all required packages by running
 
@@ -89,26 +121,6 @@ cd frontend
 npm i
 npm run dev
 ```
-
-## Jupyter Notebook
-
-In order to explore the data in more depth we have created a Jupyter Notebook in
-order to run it do the following commands:
-
-```bash
-cd jupyter_notebooks
-python -m venv ./venv
-source venv/bin/activate.sh
-pip install -r requirements.txt
-python -m ipykernel install --user --name=venv
-jupyter notebook ./
-```
-
-Next a Browser Tab should open. Then you can select the Jupyter Notebook of your
-choice.
-
-> Important: Please do not forget to select the installed `venv` as the kernel
-> in order to utilize the installed virtual environment in the Jupyter Notebook.
 
 ## :rocket: Setup for Deployment
 
@@ -124,6 +136,10 @@ sudo systemctl start docker # Starts the docker service.
 After entering this command docker starts building the containers and pulling
 down the necessary images. Please wait until this is completed.
 
+> Pleas note that currently only the FastAPI and InfluxDB Part are integrated
+> into docker. The frontend is not yet integrated and needs to be run locally
+> (see `Open Points` below)
+
 ### FastAPI
 
 FastAPI should be available under this [URL](http://127.0.0.1:8000/docs).
@@ -131,6 +147,30 @@ FastAPI should be available under this [URL](http://127.0.0.1:8000/docs).
 ### InfluxDB
 
 InfluxDB should be available under this [URL](http://127.0.0.1:8086/).
+
+## :eyes: Open Points
+
+Note that this project still has some rough edges noteably:
+
+- [ ] Frontend needs to be integrated into the `docker-compose` file
+- [ ] The number of requests on the frontend are currently too much. Each widget
+      does its own request. A dedicated `/dashboard` endpoint could be
+      introduced that returns the whole data for the entire dashboard, e.g only
+      one Request would be needed
+- [ ] For maintainability it would make sense to add some `static types` to the
+      Frontend. This could easily be achieved by adding `TypeScript`.
+- [ ] Currently the `total number of errors` does have some Error in the Flux
+      Query (e.g returns an incorrect result). This needs to be investigated
+- [ ] Define a retention policy for the buckets so that data older then x days
+      gets deleted automatically. This is easily supported by InfluxDB out of
+      the box see
+      [here](https://docs.influxdata.com/influxdb/v2/reference/internals/data-retention/#bucket-retention-period).
+- [ ] Currently everything is stored in a single bucket. It would make sense to
+      have multiple buckets with different types of data granularity (e.g data
+      per minute, per hour, per day etc.) Then the bucket could be dynamically
+      choosen depending on the passed time range. Meaning if a time range of 1
+      month is specified the data could get retrieved from the "one month
+      bucket"
 
 ## Used Ressources
 
